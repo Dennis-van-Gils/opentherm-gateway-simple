@@ -33,11 +33,6 @@ const char index_html[] PROGMEM = R"rawliteral(
         margin: 35px auto;
       }
 
-      #chart-line {
-        position: relative;
-        margin-top: -40px;
-      }
-
       .center {
         display: flex;
         align-items: center;
@@ -130,37 +125,37 @@ const char index_html[] PROGMEM = R"rawliteral(
           </td>
           <td style="width: 100%"></td>
         </tr>
+      </table>
+      <table style="width: 100%" id="idd">
         <tr>
-          <td class="label-column">Heating target, &#x00B0;C</td>
+          <td class="label-column">Central Heating setpoint, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="heatingTargetLabel" style="float: right">--</div>
+            <div id="lbl_TSet">--</div>
           </td>
-          <td class="label-column">Heating current, &#x00B0;C</td>
+          <td class="label-column">Hot Water setpoint, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="heatingCurrentLabel">--</div>
+            <div id="lbl_TdhwSet">--</div>
           </td>
         </tr>
         <tr>
-          <td class="label-column">Hot water target, &#x00B0;C</td>
+          <td class="label-column">Boiler temperature, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="dhwTargetLabel" style="float: right">--</div>
+            <div id="lbl_Tboiler">--</div>
           </td>
-          <td class="label-column">Hot water current, &#x00B0;C</td>
+          <td class="label-column">Hot Water temperature, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="dhwCurrentLabel">--</div>
+            <div id="lbl_Tdhw">--</div>
           </td>
         </tr>
         <tr>
-          <td class="label-column">Heating enable</td>
+          <td class="label-column">Central Heating enable</td>
           <td style="width: auto">
-            <div style="float: right">
-              <label class="switch">
-                <input type="checkbox" id="heatingEnableInput" disabled />
-                <span class="slider round"></span>
-              </label>
-            </div>
+            <label class="switch">
+              <input type="checkbox" id="heatingEnableInput" disabled />
+              <span class="slider round"></span>
+            </label>
           </td>
-          <td class="label-column">Hot water enable</td>
+          <td class="label-column">Hot Water enable</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="dhwEnableInput" disabled />
@@ -172,12 +167,10 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
     <div class="wrapr center" style="height: 500px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
-      Flame enable
-      <div id="chart-flame"></div>
-      Boiler actual temperature
-      <div id="chart-line2"></div>
-
-      <div id="chart-line"></div>
+      Flame on/off
+      <div id="chart-Flame"></div>
+      Boiler temperature, &#x00B0;C
+      <div id="chart-Tboiler"></div>
     </div>
 
     <div class="wrapr center">

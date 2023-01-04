@@ -1,19 +1,10 @@
 #include <Arduino.h>
 
-// clang-format off
+// clang-format offlame
 const char js[] PROGMEM = R"rawliteral(
-/*
-    // this function will generate output in this format
-    // data = [
-        [timestamp, 23],
-        [timestamp, 33],
-        [timestamp, 12]
-        ...
-    ]
-  */
 
-let tempChart;
-let flameChart;
+let chart_Tboiler;
+let chart_Flame;
 
 init();
 
@@ -59,33 +50,33 @@ function getData(dateFrom, dateTo) {
 
   const responseObj = JSON.parse(xhr.responseText);
 
-  data = [];
-  dataFlame = [];
+  _Tboiler = [];
+  _Flame = [];
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
-    data.push([timeStamp, element.field1]);
-    dataFlame.push([timeStamp, element.field4]);
+    _Tboiler.push([timeStamp, element.field1]);
+    _Flame.push([timeStamp, element.field4]);
   });
 
   var ret = {
-    tempData: data,
-    flameData: dataFlame,
+    Tboiler: _Tboiler,
+    Flame: _Flame,
   };
 
   return ret;
 }
 
 function updateChart(data) {
-  tempChart.updateSeries([
+  chart_Tboiler.updateSeries([
     {
-      data: data.tempData,
+      data: data.Tboiler,
     },
   ]);
 
-  flameChart.updateSeries([
+  chart_Flame.updateSeries([
     {
-      data: data.flameData,
+      data: data.Flame,
     },
   ]);
 }
@@ -184,8 +175,8 @@ function initUi(initOk) {
       },
     },
   };
-  tempChart = new ApexCharts(document.querySelector("#chart-line2"), options);
-  tempChart.render();
+  chart_Tboiler = new ApexCharts(document.querySelector("#chart-Tboiler"), options);
+  chart_Tboiler.render();
 
   options = {
     series: [
@@ -194,7 +185,7 @@ function initUi(initOk) {
       },
     ],
     chart: {
-      id: "chart-flame",
+      id: "chart-Flame",
       type: "area",
       height: 75,
       group: "heating",
@@ -239,8 +230,8 @@ function initUi(initOk) {
     },
   };
 
-  flameChart = new ApexCharts(document.querySelector("#chart-flame"), options);
-  flameChart.render();
+  chart_Flame = new ApexCharts(document.querySelector("#chart-Flame"), options);
+  chart_Flame.render();
 
   reloadAndUpdate();
 }
@@ -405,13 +396,13 @@ function onMessage(event) {
 
   const msgKind = msgData.slice(0, 2);
   if (msgKind == "B:") {
-    document.getElementById("heatingCurrentLabel").innerText = msgData.slice(2);
+    document.getElementById("lbl_Tboiler").innerText = msgData.slice(2);
   } else if (msgKind == "D:") {
-    document.getElementById("dhwCurrentLabel").innerText = msgData.slice(2);
+    document.getElementById("lbl_Tdhw").innerText = msgData.slice(2);
   } else if (msgKind == "F:") {
-    document.getElementById("dhwTargetLabel").innerText = msgData.slice(2);
+    document.getElementById("lbl_TdhwSet").innerText = msgData.slice(2);
   } else if (msgKind == "G:") {
-    document.getElementById("heatingTargetLabel").innerText = msgData.slice(2);
+    document.getElementById("lbl_TSet").innerText = msgData.slice(2);
   } else {
     const numberData = msgData.slice(1);
 
