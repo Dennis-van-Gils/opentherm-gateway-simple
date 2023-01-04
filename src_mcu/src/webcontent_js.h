@@ -282,6 +282,29 @@ function formatDate(date, s = ' ') {
   return `${year}-${month}-${day}${s}${hour}:${min}:${sec}`;
 }
 
+function formatTime(date, s = ' ') {
+  var d = date,
+    hour = "" + d.getHours(),
+    min = "" + d.getMinutes(),
+    sec = "" + d.getSeconds();
+
+  if (hour.length < 2) hour = "0" + hour;
+  if (min.length < 2) min = "0" + min;
+  if (sec.length < 2) sec = "0" + sec;
+
+  return `${hour}:${min}:${sec}`;
+}
+
+function pad(pad, str, padLeft) {
+  if (typeof str === 'undefined')
+    return pad;
+  if (padLeft) {
+    return (pad + str).slice(-pad.length);
+  } else {
+    return (str + pad).substring(0, pad.length);
+  }
+}
+
 function onMessage(event) {
   const msgData = event.data;
   console.log(`onMessage ${msgData}`);
@@ -318,7 +341,14 @@ function onMessage(event) {
 
     var log = text.value;
     log = log.substring(log.length-100000);
-    text.value = log + `${formatDate(date)}: ${int} [msgType: ${msgType} (${msgTypeStr}); dataId: ${dataId} (${dataIdStr}); dataValue: ${dataValue}]\r\n`;
+    text.value = log +
+      formatTime(date) + ` ` +
+      pad("0000000000", int, true) + ` = ` +
+      pad("               ", msgTypeStr, false) + ` | ` +
+      pad("   ", dataId, false) + ` | ` +
+      pad("                      ", dataIdStr, false) + ` | ` +
+      dataValue +
+      `\r\n`;
     text.scrollTop = text.scrollHeight;
   }
 }
@@ -366,7 +396,7 @@ OpenThermMessageID[20] = "DayTime"; // special / u8  Day of Week and Time of Day
 OpenThermMessageID[21] = "Date"; // u8 / u8  Calendar date
 OpenThermMessageID[22] = "Year"; // u16  Calendar year
 OpenThermMessageID[23] = "TrSetCH2"; // f8.8  Room Setpoint for 2nd CH circuit (°C)
-OpenThermMessageID[24] = "Tr,"; // f8.8  Room temperature (°C)
+OpenThermMessageID[24] = "Tr"; // f8.8  Room temperature (°C)
 OpenThermMessageID[25] = "Tboiler"; // f8.8  Boiler flow water temperature (°C)
 OpenThermMessageID[26] = "Tdhw"; // f8.8  DHW temperature (°C)
 OpenThermMessageID[27] = "Toutside"; // f8.8  Outside temperature (°C)

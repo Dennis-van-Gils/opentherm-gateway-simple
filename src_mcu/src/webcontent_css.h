@@ -3,7 +3,7 @@
 // clang-format off
 const char css[] PROGMEM = R"rawliteral(
 * {
-  font-family: Arial;
+  font-family: monospace;
 }
 
 body {
