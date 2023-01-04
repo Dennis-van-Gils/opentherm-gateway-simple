@@ -172,8 +172,11 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
     <div class="wrapr center" style="height: 500px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
+      Flame enable
       <div id="chart-flame"></div>
+      Boiler actual temperature
       <div id="chart-line2"></div>
+
       <div id="chart-line"></div>
     </div>
 

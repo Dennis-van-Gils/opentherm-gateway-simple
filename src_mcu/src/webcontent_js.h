@@ -305,6 +305,67 @@ function pad(pad, str, padLeft) {
   }
 }
 
+function dec2flag8(dec) {
+  return pad("00000000", (dec >>> 0).toString(2), true);
+}
+
+function transform_reading(dataId, dataValue) {
+  switch(dataId) {
+    /* f8.8, rounded to 2 decimals */
+    case 1:
+    case 7:
+    case 8:
+    case 9:
+    case 14:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31:
+    case 32:
+    case 56:
+    case 57:
+    case 58:
+      u88 = dataValue & 0xffff
+      dataValue = (u88 & 0x8000) ? -(0x10000 - u88) / 256.0 : u88 / 256.0
+      ans = Math.round(dataValue * 100) / 100
+      break;
+
+    /* f8.8, not rounded */
+    case 124:
+    case 125:
+      u88 = dataValue & 0xffff
+      dataValue = (u88 & 0x8000) ? -(0x10000 - u88) / 256.0 : u88 / 256.0
+      break;
+
+    /* s16 */
+    case 33:
+      ans = dataValue - 2**15
+      break;
+
+    /* flag8 / flag8 */
+    case 0:
+    case 6:
+      ans = dec2flag8((dataValue >> 8) & 0xff) + ` ` +
+        dec2flag8(dataValue & 0xff)
+      break;
+
+    /* u16, unknown */
+      default:
+        ans = dataValue
+  }
+
+  return ans
+}
+
 function onMessage(event) {
   const msgData = event.data;
   console.log(`onMessage ${msgData}`);
@@ -343,11 +404,11 @@ function onMessage(event) {
     log = log.substring(log.length-100000);
     text.value = log +
       formatTime(date) + ` ` +
-      pad("0000000000", int, true) + ` = ` +
+      pad("0000000000", int, true) + ` ` +
       pad("               ", msgTypeStr, false) + ` | ` +
       pad("   ", dataId, false) + ` | ` +
       pad("                      ", dataIdStr, false) + ` | ` +
-      dataValue +
+      transform_reading(dataId, dataValue) +
       `\r\n`;
     text.scrollTop = text.scrollHeight;
   }
