@@ -116,14 +116,20 @@ const char index_html[] PROGMEM = R"rawliteral(
           <td style="width: auto">
             <input type="datetime-local" id="date-from" />
           </td>
-          <td style="width: 100%"></td>
+          <td class="label-column">Room setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_TrSet">--</div>
+          </td>
         </tr>
         <tr>
           <td class="label-column">To</td>
           <td style="width: auto">
             <input type="datetime-local" id="date-to" />
           </td>
-          <td style="width: 100%"></td>
+          <td class="label-column">Room temperature, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_Tr">--</div>
+          </td>
         </tr>
       </table>
       <table style="width: 100%" id="idd">
@@ -165,12 +171,14 @@ const char index_html[] PROGMEM = R"rawliteral(
         </tr>
       </table>
     </div>
-    <div class="wrapr center" style="height: 500px" id="chart-container">
+    <div class="wrapr center" style="height: 850px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>
       Boiler temperature, &#x00B0;C
       <div id="chart-Tboiler"></div>
+      Room temperature, &#x00B0;C
+      <div id="chart-Tr"></div>
     </div>
 
     <div class="wrapr center">

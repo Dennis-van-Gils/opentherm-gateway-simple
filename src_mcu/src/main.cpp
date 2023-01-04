@@ -62,6 +62,10 @@ float _TdhwSet = 0;
 bool  _TdhwSet_notify = false;
 float _TSet = 0;
 bool  _TSet_notify = false;
+float _Tr = 0;
+bool  _Tr_notify = false;
+float _TrSet = 0;
+bool  _TrSet_notify = false;
 float _RelModLevel = 0;
 // clang-format on
 
@@ -104,6 +108,21 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   Serial.println(slaveResponse);
   notifyClients(slaveResponse);
 
+  if (dataId == 1) { // Control setpoint ie CH water temperature setpoint (°C)
+    _TSet_notify = true;
+    _TSet = otGetFloat(_lastRresponse);
+  }
+  if (dataId == 16) { // Room Setpoint (°C)
+    _TrSet_notify = true;
+    _TrSet = otGetFloat(_lastRresponse);
+  }
+  if (msgType == 0 && dataId == 17) { // Relative Modulation Level (%)
+    _RelModLevel = otGetFloat(_lastRresponse);
+  }
+  if (dataId == 24) { // Room temperature (°C)
+    _Tr_notify = true;
+    _Tr = otGetFloat(_lastRresponse);
+  }
   if (msgType == 0 && dataId == 25) { // Boiler flow water temperature (°C)
     _Tboiler_notify = true;
     _Tboiler = otGetFloat(_lastRresponse);
@@ -115,13 +134,6 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   if (dataId == 56) { // DHW setpoint (°C)
     _TdhwSet_notify = true;
     _TdhwSet = otGetFloat(_lastRresponse);
-  }
-  if (dataId == 1) { // Control setpoint  ie CH  water temperature setpoint (°C)
-    _TSet_notify = true;
-    _TSet = otGetFloat(_lastRresponse);
-  }
-  if (dataId == 17) { // Relative Modulation Level (%)
-    _RelModLevel = otGetFloat(_lastRresponse);
   }
 }
 
@@ -297,6 +309,14 @@ void loop() {
     _Tdhw_notify = false;
     notifyClients("D:" + String(_Tdhw));
   }
+  if (_TrSet_notify) {
+    _TrSet_notify = false;
+    notifyClients("E:" + String(_TrSet));
+  }
+  if (_Tr_notify) {
+    _Tr_notify = false;
+    notifyClients("F:" + String(_Tr));
+  }
 
   if (_thingSpeakUpd < millis()) {
     _thingSpeakUpd = millis() + 20000;
@@ -309,6 +329,8 @@ void loop() {
     ThingSpeak.setField(2, _TSet);
     ThingSpeak.setField(3, _RelModLevel);
     ThingSpeak.setField(4, mOT.isFlameOn(_lastRresponse));
+    ThingSpeak.setField(5, _TrSet);
+    ThingSpeak.setField(6, _Tr);
 
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
     if (x == 200) {

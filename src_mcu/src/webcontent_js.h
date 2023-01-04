@@ -5,6 +5,7 @@ const char js[] PROGMEM = R"rawliteral(
 
 let chart_Tboiler;
 let chart_Flame;
+let chart_Tr;
 
 init();
 
@@ -52,16 +53,19 @@ function getData(dateFrom, dateTo) {
 
   _Tboiler = [];
   _Flame = [];
+  _Tr = [];
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
     _Tboiler.push([timeStamp, element.field1]);
     _Flame.push([timeStamp, element.field4]);
+    _Tr.push([timeStamp, element.field6]);
   });
 
   var ret = {
     Tboiler: _Tboiler,
     Flame: _Flame,
+    Tr: _Tr,
   };
 
   return ret;
@@ -77,6 +81,12 @@ function updateChart(data) {
   chart_Flame.updateSeries([
     {
       data: data.Flame,
+    },
+  ]);
+
+  chart_Tr.updateSeries([
+    {
+      data: data.Tr,
     },
   ]);
 }
@@ -170,6 +180,8 @@ function initUi(initOk) {
       }
     },
     yaxis: {
+      min: 20,
+      max: 90,
       labels: {
         minWidth: 40,
       },
@@ -177,6 +189,58 @@ function initUi(initOk) {
   };
   chart_Tboiler = new ApexCharts(document.querySelector("#chart-Tboiler"), options);
   chart_Tboiler.render();
+
+  options = {
+    series: [
+      {
+        data: [],
+      },
+    ],
+    chart: {
+      id: "chart2",
+      type: "area",
+      height: 350,
+      group: "heating",
+      toolbar: {
+        autoSelected: "pan",
+        show: false,
+      },
+    },
+    stroke: {
+      width: 3,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        inverseColors: false,
+        opacityFrom: 0.5,
+        opacityTo: 0,
+        stops: [0, 90, 100],
+      },
+    },
+    markers: {
+      size: 0,
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      }
+    },
+    yaxis: {
+      min: 15,
+      max: 40,
+      labels: {
+        minWidth: 40,
+      },
+    },
+  };
+  chart_Tr = new ApexCharts(document.querySelector("#chart-Tr"), options);
+  chart_Tr.render();
 
   options = {
     series: [
@@ -403,6 +467,10 @@ function onMessage(event) {
     document.getElementById("lbl_TdhwSet").innerText = msgData.slice(2);
   } else if (msgKind == "D:") {
     document.getElementById("lbl_Tdhw").innerText = msgData.slice(2);
+  } else if (msgKind == "E:") {
+    document.getElementById("lbl_TrSet").innerText = msgData.slice(2);
+  } else if (msgKind == "F:") {
+    document.getElementById("lbl_Tr").innerText = msgData.slice(2);
   } else {
     const numberData = msgData.slice(1);
 
