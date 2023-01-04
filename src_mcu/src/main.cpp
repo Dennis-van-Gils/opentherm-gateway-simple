@@ -61,19 +61,19 @@ float otGetFloat(const unsigned long response) {
   return f;
 }
 
-bool _boilerTempNotify = false;
-float _boilerTemp = 0;
+bool _Tboiler_notify = false;
+float _Tboiler = 0;
 
-bool _dhwTempNotify = false;
-float _dhwTemp = 0;
+bool _Tdhw_notify = false;
+float _Tdhw = 0;
 
-bool _dhwSetNotify = false;
-float _dhwSet = 0;
+bool _TdhwSet_notify = false;
+float _TdhwSet = 0;
 
-bool _chSetNotify = false;
-float _chSet = 0;
+bool _TSet_notify = false;
+float _TSet = 0;
 
-float _modLevel = 0;
+float _RelModLevel = 0;
 
 unsigned long _lastRresponse;
 
@@ -106,24 +106,24 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   Serial.println(slaveResponse); // slave/boiler response
   notifyClients(slaveResponse);
 
-  if (msgType == 0 && dataId == 25) { // read && boiler temp
-    _boilerTempNotify = true;
-    _boilerTemp = otGetFloat(_lastRresponse);
+  if (msgType == 0 && dataId == 25) { // Boiler flow water temperature (°C)
+    _Tboiler_notify = true;
+    _Tboiler = otGetFloat(_lastRresponse);
   }
-  if (msgType == 0 && dataId == 26) { // read && dhw temp
-    _dhwTempNotify = true;
-    _dhwTemp = otGetFloat(_lastRresponse);
+  if (msgType == 0 && dataId == 26) { // DHW temperature (°C)
+    _Tdhw_notify = true;
+    _Tdhw = otGetFloat(_lastRresponse);
   }
-  if (dataId == 56) { // dhw setpoint
-    _dhwSetNotify = true;
-    _dhwSet = otGetFloat(_lastRresponse);
+  if (dataId == 56) { // DHW setpoint (°C)
+    _TdhwSet_notify = true;
+    _TdhwSet = otGetFloat(_lastRresponse);
   }
-  if (dataId == 1) { // ch setpoint
-    _chSetNotify = true;
-    _chSet = otGetFloat(_lastRresponse);
+  if (dataId == 1) { // Control setpoint  ie CH  water temperature setpoint (°C)
+    _TSet_notify = true;
+    _TSet = otGetFloat(_lastRresponse);
   }
-  if (dataId == 17) { // RelModLevel
-    _modLevel = otGetFloat(_lastRresponse);
+  if (dataId == 17) { // Relative Modulation Level (%)
+    _RelModLevel = otGetFloat(_lastRresponse);
   }
 }
 
@@ -289,21 +289,21 @@ void loop() {
   sOT.process();
   ws.cleanupClients();
 
-  if (_boilerTempNotify) {
-    _boilerTempNotify = false;
-    notifyClients("B:" + String(_boilerTemp));
+  if (_Tboiler_notify) {
+    _Tboiler_notify = false;
+    notifyClients("B:" + String(_Tboiler));
   }
-  if (_dhwTempNotify) {
-    _dhwTempNotify = false;
-    notifyClients("D:" + String(_dhwTemp));
+  if (_Tdhw_notify) {
+    _Tdhw_notify = false;
+    notifyClients("D:" + String(_Tdhw));
   }
-  if (_dhwSetNotify) {
-    _dhwSetNotify = false;
-    notifyClients("F:" + String(_dhwSet));
+  if (_TdhwSet_notify) {
+    _TdhwSet_notify = false;
+    notifyClients("F:" + String(_TdhwSet));
   }
-  if (_chSetNotify) {
-    _chSetNotify = false;
-    notifyClients("G:" + String(_chSet));
+  if (_TSet_notify) {
+    _TSet_notify = false;
+    notifyClients("G:" + String(_TSet));
   }
 
   if (_thingSpeakUpd < millis()) {
@@ -313,9 +313,9 @@ void loop() {
         myWriteAPIKey == "TOKEN")
       return;
 
-    ThingSpeak.setField(1, _boilerTemp);
-    ThingSpeak.setField(2, _chSet);
-    ThingSpeak.setField(3, _modLevel);
+    ThingSpeak.setField(1, _Tboiler);
+    ThingSpeak.setField(2, _TSet);
+    ThingSpeak.setField(3, _RelModLevel);
     ThingSpeak.setField(4, mOT.isFlameOn(_lastRresponse));
 
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
