@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-// clang-format offlame
+// clang-format off
 const char js[] PROGMEM = R"rawliteral(
 
 let chart_Tboiler;
@@ -395,14 +395,14 @@ function onMessage(event) {
   console.log(`onMessage ${msgData}`);
 
   const msgKind = msgData.slice(0, 2);
-  if (msgKind == "B:") {
+  if (msgKind == "A:") {
+    document.getElementById("lbl_TSet").innerText = msgData.slice(2);
+  } else if (msgKind == "B:") {
     document.getElementById("lbl_Tboiler").innerText = msgData.slice(2);
+  } else if (msgKind == "C:") {
+    document.getElementById("lbl_TdhwSet").innerText = msgData.slice(2);
   } else if (msgKind == "D:") {
     document.getElementById("lbl_Tdhw").innerText = msgData.slice(2);
-  } else if (msgKind == "F:") {
-    document.getElementById("lbl_TdhwSet").innerText = msgData.slice(2);
-  } else if (msgKind == "G:") {
-    document.getElementById("lbl_TSet").innerText = msgData.slice(2);
   } else {
     const numberData = msgData.slice(1);
 

@@ -94,12 +94,14 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
 
+  // Thermostat request
   String masterRequest = "T" + String(request, HEX);
-  Serial.println(masterRequest + " " +
-                 String(request, BIN)); // master/thermostat request
+  Serial.println(masterRequest + " " + String(request, BIN));
   notifyClients(masterRequest);
+
+  // Boiler response
   String slaveResponse = "B" + String(_lastRresponse, HEX);
-  Serial.println(slaveResponse); // slave/boiler response
+  Serial.println(slaveResponse);
   notifyClients(slaveResponse);
 
   if (msgType == 0 && dataId == 25) { // Boiler flow water temperature (°C)
@@ -279,21 +281,21 @@ void loop() {
   sOT.process();
   ws.cleanupClients();
 
+  if (_TSet_notify) {
+    _TSet_notify = false;
+    notifyClients("A:" + String(_TSet));
+  }
   if (_Tboiler_notify) {
     _Tboiler_notify = false;
     notifyClients("B:" + String(_Tboiler));
   }
+  if (_TdhwSet_notify) {
+    _TdhwSet_notify = false;
+    notifyClients("C:" + String(_TdhwSet));
+  }
   if (_Tdhw_notify) {
     _Tdhw_notify = false;
     notifyClients("D:" + String(_Tdhw));
-  }
-  if (_TdhwSet_notify) {
-    _TdhwSet_notify = false;
-    notifyClients("F:" + String(_TdhwSet));
-  }
-  if (_TSet_notify) {
-    _TSet_notify = false;
-    notifyClients("G:" + String(_TSet));
   }
 
   if (_thingSpeakUpd < millis()) {
