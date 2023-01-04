@@ -12,30 +12,28 @@
 #include <OpenTherm.h>
 
 // Web content
-
 #include "webcontent_css.h"
 #include "webcontent_favico.h"
 #include "webcontent_index.h"
 #include "webcontent_js.h"
 
 // API settings
-
 #if __has_include("wifi_settings.h")
 #  include <wifi_settings.h>
 #else
 #  include <wifi_settings_template.h>
 #endif
 
-// HW settings
+// Enable OTA updates
+#include <AsyncElegantOTA.h>
 
+// HW settings
 const int mInPin = 21;  // 2 for Arduino, 4 for ESP8266 (D2), 21 for ESP32
 const int mOutPin = 22; // 4 for Arduino, 5 for ESP8266 (D1), 22 for ESP32
-
 const int sInPin = 19;  // 3 for Arduino, 12 for ESP8266 (D6), 19 for ESP32
 const int sOutPin = 23; // 5 for Arduino, 13 for ESP8266 (D7), 23 for ESP32
 
 // code
-
 extern const char index_html[];
 extern const char css[];
 extern const char js[];
@@ -262,6 +260,9 @@ void setup() {
     response->addHeader("cache-control", "max-age=7776000");
     request->send(response);
   });
+
+  // Enable OTA updates
+  AsyncElegantOTA.begin(&server);
 
   server.onNotFound(notFound);
   server.begin();
