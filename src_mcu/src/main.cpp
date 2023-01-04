@@ -42,16 +42,28 @@ extern const byte favico_ico[];
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+WiFiClient client;
 
 OpenTherm mOT(mInPin, mOutPin);
 OpenTherm sOT(sInPin, sOutPin, true);
-
-bool _heatingDisable = false;
-bool _dhwDisable = false;
-
 void ICACHE_RAM_ATTR mHandleInterrupt() { mOT.handleInterrupt(); }
-
 void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
+
+// clang-format off
+bool ledState = false;
+unsigned long _lastRresponse;
+bool  _heating_disable = false;
+bool  _dhw_disable = false;
+float _Tboiler = 0;
+bool  _Tboiler_notify = false;
+float _Tdhw = 0;
+bool  _Tdhw_notify = false;
+float _TdhwSet = 0;
+bool  _TdhwSet_notify = false;
+float _TSet = 0;
+bool  _TSet_notify = false;
+float _RelModLevel = 0;
+// clang-format on
 
 void notifyClients(String s) { ws.textAll(s); }
 
@@ -61,32 +73,16 @@ float otGetFloat(const unsigned long response) {
   return f;
 }
 
-bool _Tboiler_notify = false;
-float _Tboiler = 0;
-
-bool _Tdhw_notify = false;
-float _Tdhw = 0;
-
-bool _TdhwSet_notify = false;
-float _TdhwSet = 0;
-
-bool _TSet_notify = false;
-float _TSet = 0;
-
-float _RelModLevel = 0;
-
-unsigned long _lastRresponse;
-
 void processRequest(unsigned long request, OpenThermResponseStatus status) {
   const byte msgType = (request << 1) >> 29;
   const int dataId = (request >> 16) & 0xFF;
 
   if (msgType == 0 && dataId == 0) { // read && status flag
-    if (_heatingDisable) {
+    if (_heating_disable) {
       Serial.println("Disable Heating");
       request &= ~(1ul << (0 + 8));
     }
-    if (_dhwDisable) {
+    if (_dhw_disable) {
       Serial.println("Disable DHW");
       request &= ~(1ul << (1 + 8));
     }
@@ -126,12 +122,6 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
     _RelModLevel = otGetFloat(_lastRresponse);
   }
 }
-
-const char *PARAM_MESSAGE = "message";
-
-WiFiClient client;
-
-bool ledState = false;
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -219,25 +209,25 @@ void setup() {
   server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Heating disable override");
     request->send(200, "text/plain", "OK: heating off");
-    _heatingDisable = true;
+    _heating_disable = true;
   });
 
   server.on("/heating-true", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Heating enable");
     request->send(200, "text/plain", "OK: heating on");
-    _heatingDisable = false;
+    _heating_disable = false;
   });
 
   server.on("/dhw-false", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Domestic hot water disable override");
     request->send(200, "text/plain", "OK: dhw off");
-    _dhwDisable = true;
+    _dhw_disable = true;
   });
 
   server.on("/dhw-true", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Domestic hot water enable");
     request->send(200, "text/plain", "OK: dhw on");
-    _dhwDisable = false;
+    _dhw_disable = false;
   });
 
   server.on("/otgw-core.js", HTTP_GET, [](AsyncWebServerRequest *request) {
