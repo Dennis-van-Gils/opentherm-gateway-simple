@@ -1,23 +1,25 @@
 #include <Arduino.h>
 #ifdef ESP32
 #include <WiFi.h>
-#include "src/ESPAsyncWebServer/AsyncTCP.h"
+#include "AsyncTCP.h"
 #include <esp_task_wdt.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include "src/ESPAsyncTCP/ESPAsyncTCP.h"
 #endif
-#include "src/ESPAsyncWebServer/ESPAsyncWebServer.h"
-#include "src/ThingSpeak/ThingSpeak.h"
+#include "ESPAsyncWebServer.h"
+#include "ThingSpeak.h"
 #include <OpenTherm.h>
+
+#include "webcontent.h"
 
 // API settings
 
-const char* ssid = "SSID";
-const char* password = "PASSWORD";
-unsigned long myChannelNumber = 0;
-const char* myReadAPIKey = "TOKEN";
-const char* myWriteAPIKey = "TOKEN";
+#if __has_include("wifi_settings.h")
+#  include <wifi_settings.h>
+#else
+#  include <wifi_settings_template.h>
+#endif
 
 // HW settings
 
