@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #ifdef ESP32
-#include <WiFi.h>
-#include "AsyncTCP.h"
-#include <esp_task_wdt.h>
+#  include "AsyncTCP.h"
+#  include <WiFi.h>
+#  include <esp_task_wdt.h>
 #elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include "src/ESPAsyncTCP/ESPAsyncTCP.h"
+#  include "src/ESPAsyncTCP/ESPAsyncTCP.h"
+#  include <ESP8266WiFi.h>
 #endif
 #include "ESPAsyncWebServer.h"
 #include "ThingSpeak.h"
@@ -23,11 +23,11 @@
 
 // HW settings
 
-const int mInPin = 21; //2 for Arduino, 4 for ESP8266 (D2), 21 for ESP32
-const int mOutPin = 22; //4 for Arduino, 5 for ESP8266 (D1), 22 for ESP32
+const int mInPin = 21;  // 2 for Arduino, 4 for ESP8266 (D2), 21 for ESP32
+const int mOutPin = 22; // 4 for Arduino, 5 for ESP8266 (D1), 22 for ESP32
 
-const int sInPin = 19; //3 for Arduino, 12 for ESP8266 (D6), 19 for ESP32
-const int sOutPin = 23; //5 for Arduino, 13 for ESP8266 (D7), 23 for ESP32
+const int sInPin = 19;  // 3 for Arduino, 12 for ESP8266 (D6), 19 for ESP32
+const int sOutPin = 23; // 5 for Arduino, 13 for ESP8266 (D7), 23 for ESP32
 
 // code
 
@@ -36,8 +36,6 @@ extern const char css[];
 extern const char js[];
 extern const int favico_ico_length;
 extern const byte favico_ico[];
-
-
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -48,24 +46,17 @@ OpenTherm sOT(sInPin, sOutPin, true);
 bool _heatingDisable = false;
 bool _dhwDisable = false;
 
-void ICACHE_RAM_ATTR mHandleInterrupt() {
-  mOT.handleInterrupt();
-}
+void ICACHE_RAM_ATTR mHandleInterrupt() { mOT.handleInterrupt(); }
 
-void ICACHE_RAM_ATTR sHandleInterrupt() {
-  sOT.handleInterrupt();
-}
+void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
 
-void notifyClients(String s) {
-  ws.textAll(s);
-}
+void notifyClients(String s) { ws.textAll(s); }
 
 float otGetFloat(const unsigned long response) {
   const uint16_t u88 = response & 0xffff;
   const float f = (u88 & 0x8000) ? -(0x10000L - u88) / 256.0f : u88 / 256.0f;
   return f;
 }
-
 
 bool _boilerTempNotify = false;
 float _boilerTemp = 0;
@@ -97,17 +88,19 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
       request &= ~(1ul << (1 + 8));
     }
     request &= ~(1ul << 31);
-    if (mOT.parity(request)) request |= (1ul << 31);
+    if (mOT.parity(request))
+      request |= (1ul << 31);
   }
 
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
 
   String masterRequest = "T" + String(request, HEX);
-  Serial.println(masterRequest + " " + String(request, BIN));  //master/thermostat request
+  Serial.println(masterRequest + " " +
+                 String(request, BIN)); // master/thermostat request
   notifyClients(masterRequest);
   String slaveResponse = "B" + String(_lastRresponse, HEX);
-  Serial.println(slaveResponse); //slave/boiler response
+  Serial.println(slaveResponse); // slave/boiler response
   notifyClients(slaveResponse);
 
   if (msgType == 0 && dataId == 25) { // read && boiler temp
@@ -131,28 +124,30 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   }
 }
 
-const char* PARAM_MESSAGE = "message";
+const char *PARAM_MESSAGE = "message";
 
-WiFiClient  client;
+WiFiClient client;
 
 bool ledState = false;
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-  AwsFrameInfo *info = (AwsFrameInfo*)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+  AwsFrameInfo *info = (AwsFrameInfo *)arg;
+  if (info->final && info->index == 0 && info->len == len &&
+      info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char*)data, "toggle") == 0) {
+    if (strcmp((char *)data, "toggle") == 0) {
       ledState = !ledState;
-      //notifyClients();
+      // notifyClients();
     }
   }
 }
 
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-             void *arg, uint8_t *data, size_t len) {
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+             AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      Serial.printf("WebSocket client #%u connected from %s\n", client->id(),
+                    client->remoteIP().toString().c_str());
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
@@ -171,12 +166,11 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 
-String processor(const String& var) {
+String processor(const String &var) {
   if (var == "STATE") {
     if (ledState) {
       return "ON";
-    }
-    else {
+    } else {
       return "OFF";
     }
   }
@@ -184,14 +178,12 @@ String processor(const String& var) {
   return "";
 }
 
-
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found " + request->url());
   Serial.println("Not found " + request->url());
 }
 
-String htmlVarProcessor(const String& var)
-{
+String htmlVarProcessor(const String &var) {
   if (var == "IP_ADDR")
     return WiFi.localIP().toString();
 
@@ -203,7 +195,6 @@ String htmlVarProcessor(const String& var)
 
   return String();
 }
-
 
 void setup() {
   Serial.begin(9600);
@@ -218,48 +209,51 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", index_html, htmlVarProcessor);
   });
 
-  server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Heating disable override");
     request->send(200, "text/plain", "OK: heating off");
     _heatingDisable = true;
   });
 
-  server.on("/heating-true", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/heating-true", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Heating enable");
     request->send(200, "text/plain", "OK: heating on");
     _heatingDisable = false;
   });
 
-  server.on("/dhw-false", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/dhw-false", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Domestic hot water disable override");
     request->send(200, "text/plain", "OK: dhw off");
     _dhwDisable = true;
   });
 
-  server.on("/dhw-true", HTTP_GET, [](AsyncWebServerRequest * request) {
+  server.on("/dhw-true", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Domestic hot water enable");
     request->send(200, "text/plain", "OK: dhw on");
     _dhwDisable = false;
   });
 
-  server.on("/otgw-core.js", HTTP_GET, [](AsyncWebServerRequest * request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/javascript", js);
+  server.on("/otgw-core.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response =
+        request->beginResponse_P(200, "text/javascript", js);
     response->addHeader("cache-control", "max-age=7776000");
     request->send(response);
   });
 
-  server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest * request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "text/css", css);
+  server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response =
+        request->beginResponse_P(200, "text/css", css);
     response->addHeader("cache-control", "max-age=7776000");
     request->send(response);
   });
 
-  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request) {
-    AsyncWebServerResponse* response = request->beginResponse_P(200, "image/x-icon", favico_ico, favico_ico_length);
+  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
+    AsyncWebServerResponse *response = request->beginResponse_P(
+        200, "image/x-icon", favico_ico, favico_ico_length);
     response->addHeader("cache-control", "max-age=7776000");
     request->send(response);
   });
@@ -275,8 +269,8 @@ void setup() {
   sOT.begin(sHandleInterrupt, processRequest);
 
 #ifdef ESP32
-  esp_task_wdt_init(10, true); //enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL); //add current thread to WDT watch
+  esp_task_wdt_init(10, true); // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL);      // add current thread to WDT watch
 #endif
 }
 
@@ -309,7 +303,8 @@ void loop() {
   if (_thingSpeakUpd < millis()) {
     _thingSpeakUpd = millis() + 20000;
 
-    if (myChannelNumber == 0 || myReadAPIKey == "TOKEN" || myWriteAPIKey == "TOKEN")
+    if (myChannelNumber == 0 || myReadAPIKey == "TOKEN" ||
+        myWriteAPIKey == "TOKEN")
       return;
 
     ThingSpeak.setField(1, _boilerTemp);
@@ -320,8 +315,7 @@ void loop() {
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
     if (x == 200) {
       Serial.println("Channel update successful.");
-    }
-    else {
+    } else {
       Serial.println("Problem updating channel. HTTP error code " + String(x));
     }
   }
