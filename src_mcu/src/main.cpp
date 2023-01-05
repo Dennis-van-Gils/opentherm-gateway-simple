@@ -330,7 +330,7 @@ void loop() {
     ThingSpeak.setField(3, _RelModLevel);
     ThingSpeak.setField(4, mOT.isFlameOn(_lastRresponse));
     ThingSpeak.setField(5, _TrSet);
-    ThingSpeak.setField(6, _Tr);
+    ThingSpeak.setField(6, _Tr * 100);
 
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
     if (x == 200) {

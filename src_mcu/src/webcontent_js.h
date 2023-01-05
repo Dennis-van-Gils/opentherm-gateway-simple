@@ -57,9 +57,17 @@ function getData(dateFrom, dateTo) {
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
-    _Tboiler.push([timeStamp, element.field1]);
+    if (element.field1 > 0) {
+      _Tboiler.push([timeStamp, element.field1]);
+    } else {
+      _Tboiler.push([timeStamp, null]);
+    }
     _Flame.push([timeStamp, element.field4]);
-    _Tr.push([timeStamp, element.field6]);
+    if (element.field6 > 100) {
+      _Tr.push([timeStamp, element.field6 / 100]);
+    } else {
+      _Tr.push([timeStamp, null]);
+    }
   });
 
   var ret = {
@@ -154,21 +162,18 @@ function initUi(initOk) {
         show: true,
       },
     },
+    animations: {
+      enabled: false
+    },
     stroke: {
+      curve: "stepline",
       width: 3,
     },
     dataLabels: {
       enabled: false,
     },
     fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        inverseColors: false,
-        opacityFrom: 0.5,
-        opacityTo: 0,
-        stops: [0, 90, 100],
-      },
+      type: "solid",
     },
     markers: {
       size: 0,
@@ -180,8 +185,6 @@ function initUi(initOk) {
       }
     },
     yaxis: {
-      min: 20,
-      max: 90,
       labels: {
         minWidth: 40,
       },
@@ -206,21 +209,18 @@ function initUi(initOk) {
         show: false,
       },
     },
+    animations: {
+      enabled: false
+    },
     stroke: {
+      curve: "stepline",
       width: 3,
     },
     dataLabels: {
       enabled: false,
     },
     fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        inverseColors: false,
-        opacityFrom: 0.5,
-        opacityTo: 0,
-        stops: [0, 90, 100],
-      },
+      type: "solid",
     },
     markers: {
       size: 0,
@@ -232,8 +232,6 @@ function initUi(initOk) {
       }
     },
     yaxis: {
-      min: 15,
-      max: 40,
       labels: {
         minWidth: 40,
       },
@@ -258,21 +256,18 @@ function initUi(initOk) {
         show: false,
       },
     },
+    animations: {
+      enabled: false
+    },
     stroke: {
+      curve: "stepline",
       width: 3,
     },
     dataLabels: {
       enabled: false,
     },
     fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        inverseColors: false,
-        opacityFrom: 0.5,
-        opacityTo: 0,
-        stops: [0, 90, 100],
-      },
+      type: "solid",
     },
     markers: {
       size: 0,
