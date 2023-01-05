@@ -33,12 +33,11 @@ const int mOutPin = 22; // 4 for Arduino, 5 for ESP8266 (D1), 22 for ESP32
 const int sInPin = 19;  // 3 for Arduino, 12 for ESP8266 (D6), 19 for ESP32
 const int sOutPin = 23; // 5 for Arduino, 13 for ESP8266 (D7), 23 for ESP32
 
-// code
 extern const char index_html[];
 extern const char css[];
 extern const char js[];
-extern const int favico_ico_length;
-extern const byte favico_ico[];
+extern const int favicon_ico_length;
+extern const byte favicon_ico[];
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -50,7 +49,7 @@ void ICACHE_RAM_ATTR mHandleInterrupt() { mOT.handleInterrupt(); }
 void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
 
 // clang-format off
-bool ledState = false;
+int _thingSpeakUpd = 0;
 unsigned long _lastRresponse;
 bool  _heating_disable = false;
 bool  _dhw_disable = false;
@@ -142,10 +141,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len &&
       info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char *)data, "toggle") == 0) {
-      ledState = !ledState;
-      // notifyClients();
-    }
   }
 }
 
@@ -173,18 +168,6 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 
-String processor(const String &var) {
-  if (var == "STATE") {
-    if (ledState) {
-      return "ON";
-    } else {
-      return "OFF";
-    }
-  }
-
-  return "";
-}
-
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found " + request->url());
   Serial.println("Not found " + request->url());
@@ -209,7 +192,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("WiFi Failed!\n");
+    Serial.print("WiFi Failed!\n");
     return;
   }
 
@@ -260,7 +243,7 @@ void setup() {
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginResponse_P(
-        200, "image/x-icon", favico_ico, favico_ico_length);
+        200, "image/x-icon", favicon_ico, favicon_ico_length);
     response->addHeader("cache-control", "max-age=7776000");
     request->send(response);
   });
@@ -283,8 +266,6 @@ void setup() {
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
 #endif
 }
-
-int _thingSpeakUpd = 0;
 
 void loop() {
 #ifdef ESP32
