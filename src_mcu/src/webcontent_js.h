@@ -57,12 +57,15 @@ function getData(dateFrom, dateTo) {
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
+
     if (element.field1 > 0) {
       _Tboiler.push([timeStamp, element.field1]);
     } else {
       _Tboiler.push([timeStamp, null]);
     }
+
     _Flame.push([timeStamp, element.field4]);
+
     if (element.field6 > 100) {
       _Tr.push([timeStamp, element.field6 / 100]);
     } else {
@@ -117,7 +120,6 @@ function initUi(initOk) {
   document.querySelector("#date-from").addEventListener("change", (event) => {
     reloadAndUpdate();
   });
-
   document.querySelector("#date-to").addEventListener("change", (event) => {
     reloadAndUpdate();
   });
@@ -298,6 +300,7 @@ function initUi(initOk) {
 //var gateway = `ws://${window.location.hostname}/ws`;
 var gateway = `ws://${ipAddr}/ws`;
 var websocket;
+
 function initWebSocket() {
   console.log("Trying to open a WebSocket connection...");
   websocket = new WebSocket(gateway);
@@ -305,6 +308,7 @@ function initWebSocket() {
   websocket.onclose = onClose;
   websocket.onmessage = onMessage; // <-- add this line
 }
+
 function onOpen(event) {
   console.log("Connection opened");
 }
@@ -312,6 +316,10 @@ function onOpen(event) {
 function onClose(event) {
   console.log("Connection closed");
   setTimeout(initWebSocket, 2000);
+}
+
+function onLoad(event) {
+  initWebSocket();
 }
 
 function formatDate(date, s = ' ') {
@@ -441,7 +449,7 @@ function transform_reading(dataId, dataValue) {
         String(dataValue & 0xff) + `)`;
       break;
 
-    /* u16 */
+    /* u16 and others */
     default:
       ans = dataValue;
   }
@@ -488,24 +496,20 @@ function onMessage(event) {
     const dataIdStr = OpenThermMessageID[dataId];
 
     var log = text.value;
-    log = log.substring(log.length-100000);
+    log = log.substring(log.length - 100000);
     text.value = log +
       formatTime(date) + ` ` +
-      pad("0000000000", int, true) + ` ` +
-      pad("               ", msgTypeStr, false) + ` | ` +
-      pad("   ", dataId, false) + ` | ` +
-      pad("                      ", dataIdStr, false) + ` | ` +
-      transform_reading(dataId, dataValue) +
-      `\r\n`;
+      pad("0".repeat(10), int, true) + ` ` +
+      pad(" ".repeat(15), msgTypeStr, false) + ` | ` +
+      pad(" ".repeat(3)), dataId, false) + ` | ` +
+      pad(" ".repeat(22), dataIdStr, false) + ` | ` +
+        transform_reading(dataId, dataValue) +
+        `\r\n`;
     text.scrollTop = text.scrollHeight;
   }
 }
 
 window.addEventListener("load", onLoad);
-
-function onLoad(event) {
-  initWebSocket();
-}
 
 var OpenThermMessageType = [];
 /*  Master to Slave */
