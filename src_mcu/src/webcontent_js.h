@@ -515,7 +515,7 @@ function onMessage(event) {
     const dataIdStr = OpenThermMessageID[dataId];
 
     var log = text.value;
-    log = log.substring(log.length - 100000);
+    log = log.substring(log.length - 500000);
     text.value = log +
       formatTime(date) + ` ` +
       // pad(`0`.repeat(10), int, true) + ` ` +
