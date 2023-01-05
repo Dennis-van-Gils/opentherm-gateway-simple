@@ -364,12 +364,15 @@ function pad(pad, str, padLeft) {
 }
 
 function dec2flag8(dec) {
-  return pad("00000000", (dec >>> 0).toString(2), true);
+  return `b` + pad("00000000", (dec >>> 0).toString(2), true);
 }
 
 function transform_reading(dataId, dataValue) {
+  /* TODO: Specific for Remeha, read here:
+  https://github.com/rvdbreemen/OTGW-firmware/blob/main/Specification/New%20OT%20data-ids.txt
+  */
   switch(dataId) {
-    /* f8.8, rounded to 2 decimals */
+    // f8.8, rounded to 2 decimals
     case 1: case 7: case 8: case 9: case 14: case 16: case 17: case 18: case 19:
     case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
     case 31: case 32: case 56: case 57: case 58:
@@ -378,48 +381,96 @@ function transform_reading(dataId, dataValue) {
       ans = (Math.round(ans * 100) / 100).toFixed(2);
       break;
 
-    /* f8.8, not rounded */
+    // f8.8, not rounded
     case 124: case 125:
       u88 = dataValue & 0xffff;
       ans = (u88 & 0x8000) ? -(0x10000 - u88) / 256.0 : u88 / 256.0;
       break;
 
-    /* s16 */
-    case 33:
-      ans = dataValue - 2**15;
-      break;
-
-    /* flag8 / flag8 */
-    case 0: case 6:
-      ans =
-        dec2flag8((dataValue >> 8) & 0xff) + ` ` + dec2flag8(dataValue & 0xff);
-      break;
-
-    /* u8 / u8 */
+    // u8 / u8
     case 4: case 10: case 11: case 12: case 13: case 15: case 21: case 126:
     case 127:
-      ans =
-        `(` + String((dataValue >> 8) & 0xff) + `, ` +
-        String(dataValue & 0xff) + `)`;
+      ans = `(` +
+        ((dataValue >> 8) & 0xff) + `, ` +
+        (dataValue & 0xff) + `)`;
       break;
 
-    /* s8 / s8 */
+    // s8 / s8
     case 48: case 49: case 50:
-      ans =
-        `(` + String((dataValue >> 8) & 0xff - 2**7) + `, ` +
-        String(dataValue & 0xff - 2**7) + `)`;
+      ans = `(` +
+        ((dataValue >> 8) & 0xff - 0x80) + `, ` +
+        (dataValue & 0xff - 0x80) + `)`;
       break;
 
-    /* flag8 / u8 */
+    // flag8 / flag8
+    case 0: case 6:
+      ans =
+        dec2flag8((dataValue >> 8) & 0xff) + ` ` +
+        dec2flag8(dataValue & 0xff);
+      break;
+
+    // flag8 / -
+    case 100:
+      ans = dec2flag8(dataValue & 0xff);
+      break;
+
+    // flag8 / u8
     case 2: case 3: case 5:
-      ans =
-        `(` + dec2flag8((dataValue >> 8) & 0xff) + `, ` +
-        String(dataValue & 0xff) + `)`;
+      ans = `(` +
+        dec2flag8((dataValue >> 8) & 0xff) + `, ` +
+        (dataValue & 0xff) + `)`;
       break;
 
-    /* u16 and others */
-    default:
+    // u16
+    case 22: case 115: case 116: case 117: case 118: case 119: case 120:
+    case 121: case 122: case 123:
       ans = dataValue;
+      break;
+
+    // s16
+    case 33:
+      ans = dataValue - 0x8000;
+      break;
+
+    // Day of Week & Time of Day
+    case 20:
+      if (dataValue === 0) {
+        ans = 0;
+      } else {
+        switch((dataValue >> 13) & 0xff) {
+          case 1:
+            ans = `Monday `;
+            break;
+          case 2:
+            ans = `Tuesday `;
+            break;
+          case 3:
+            ans = `Wednesday `;
+            break;
+          case 4:
+            ans = `Thursday `;
+            break;
+          case 5:
+            ans = `Friday `;
+            break;
+          case 6:
+            ans = `Saturday `;
+            break;
+          case 7:
+            ans = `Sunday `;
+            break;
+          default:
+            ans = ``;
+        }
+        ans = ans +
+          pad(`00`, (dataValue >> 8) & 0x1f, true) + `:` +
+          pad(`00`, dataValue & 0xff, true);
+      }
+      break;
+
+    // unknown
+    default:
+      ans = dataValue + ' (?)';
   }
 
   return ans;
@@ -467,10 +518,10 @@ function onMessage(event) {
     log = log.substring(log.length - 100000);
     text.value = log +
       formatTime(date) + ` ` +
-      pad("0".repeat(10), int, true) + ` ` +
-      pad(" ".repeat(15), msgTypeStr, false) + ` | ` +
-      pad(" ".repeat(3) , dataId, false) + ` | ` +
-      pad(" ".repeat(22), dataIdStr, false) + ` | ` +
+      // pad(`0`.repeat(10), int, true) + ` ` +
+      pad(` `.repeat(15), msgTypeStr, false) + ` | ` +
+      pad(` `.repeat(3) , dataId, false) + ` | ` +
+      pad(` `.repeat(22), dataIdStr, false) + ` | ` +
         transform_reading(dataId, dataValue) +
         `\r\n`;
     text.scrollTop = text.scrollHeight;
@@ -480,7 +531,7 @@ function onMessage(event) {
 window.addEventListener("load", onLoad);
 
 var OpenThermMessageType = [];
-/*  Master to Slave */
+/* Master to Slave */
 OpenThermMessageType[0] = "READ_DATA";
 OpenThermMessageType[1] = "WRITE_DATA";
 OpenThermMessageType[2] = "INVALID_DATA";
