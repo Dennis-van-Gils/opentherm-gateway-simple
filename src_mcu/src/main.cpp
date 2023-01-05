@@ -13,7 +13,7 @@
 
 // Web content
 #include "webcontent_css.h"
-#include "webcontent_favico.h"
+#include "webcontent_favicon.h"
 #include "webcontent_index.h"
 #include "webcontent_js.h"
 
