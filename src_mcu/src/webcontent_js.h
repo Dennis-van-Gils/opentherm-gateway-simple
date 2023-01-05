@@ -370,6 +370,7 @@ function dec2flag8(dec) {
 function transform_reading(dataId, dataValue) {
   /* TODO: Specific for Remeha, read here:
   https://github.com/rvdbreemen/OTGW-firmware/blob/main/Specification/New%20OT%20data-ids.txt
+  https://www.opentherm.eu/request-details/?post_ids=1833
   */
   switch(dataId) {
     // f8.8, rounded to 2 decimals
