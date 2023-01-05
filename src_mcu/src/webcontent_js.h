@@ -411,7 +411,7 @@ function transform_reading(dataId, dataValue) {
 
     // flag8 / -
     case 100:
-      ans = dec2flag8(dataValue & 0xff);
+      ans = dec2flag8(dataValue & 0xff); // Operates on the low-byte
       break;
 
     // flag8 / u8
