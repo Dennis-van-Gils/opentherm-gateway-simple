@@ -91,12 +91,6 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
       request |= (1ul << 31);
   }
 
-  /*
-  // Test writing an external room temperature
-  if (msgType == OpenThermMessageType::WRITE_DATA &&
-      dataId == OpenThermMessageID::Tr) {}
-  */
-
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
 
