@@ -72,10 +72,12 @@ float _RelModLevel = 0;
 void notifyClients(String s) { ws.textAll(s); }
 
 void processRequest(unsigned long request, OpenThermResponseStatus status) {
-  const byte msgType = (request << 1) >> 29;
-  const int dataId = (request >> 16) & 0xFF;
+  OpenThermMessageType msgType = mOT.getMessageType(request);
+  OpenThermMessageID dataId = mOT.getDataID(request);
 
-  if (msgType == 0 && dataId == 0) { // read && status flag
+  // Potentially modify thermostat request
+  if (msgType == OpenThermMessageType::READ_DATA &&
+      dataId == OpenThermMessageID::Status) {
     if (_heating_disable) {
       Serial.println("Disable Heating");
       request &= ~(1ul << (0 + 8));
@@ -88,6 +90,12 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
     if (mOT.parity(request))
       request |= (1ul << 31);
   }
+
+  /*
+  // Test writing an external room temperature
+  if (msgType == OpenThermMessageType::WRITE_DATA &&
+      dataId == OpenThermMessageID::Tr) {}
+  */
 
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
@@ -103,33 +111,43 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   notifyClients(slaveResponse);
 
   // Update the variables that you want logged
-  if (dataId == 0) { // Status
+  // -----------------------------------------
+
+  // Status
+  if (dataId == OpenThermMessageID::Status) {
     _IsFlameOn = mOT.isFlameOn(_lastRresponse);
   }
-  if (dataId == 1) { // Control setpoint ie CH water temperature setpoint (°C)
+  // Control setpoint ie CH water temperature setpoint (°C)
+  if (dataId == OpenThermMessageID::TSet) {
     _TSet_notify = true;
     _TSet = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 16) { // Room Setpoint (°C)
+  // Room Setpoint (°C)
+  if (dataId == OpenThermMessageID::TrSet) {
     _TrSet_notify = true;
     _TrSet = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 17) { // Relative Modulation Level (%)
+  // Relative Modulation Level (%)
+  if (dataId == OpenThermMessageID::RelModLevel) {
     _RelModLevel = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 24) { // Room temperature (°C)
+  // Room temperature (°C)
+  if (dataId == OpenThermMessageID::Tr) {
     _Tr_notify = true;
     _Tr = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 25) { // Boiler flow water temperature (°C)
+  // Boiler flow water temperature (°C)
+  if (dataId == OpenThermMessageID::Tboiler) {
     _Tboiler_notify = true;
     _Tboiler = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 26) { // DHW temperature (°C)
+  // DHW temperature (°C)
+  if (dataId == OpenThermMessageID::Tdhw) {
     _Tdhw_notify = true;
     _Tdhw = mOT.getFloat(_lastRresponse);
   }
-  if (dataId == 56) { // DHW setpoint (°C)
+  // DHW setpoint (°C)
+  if (dataId == OpenThermMessageID::TdhwSet) {
     _TdhwSet_notify = true;
     _TdhwSet = mOT.getFloat(_lastRresponse);
   }
