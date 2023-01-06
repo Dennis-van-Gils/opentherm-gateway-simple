@@ -53,6 +53,7 @@ int _thingSpeakUpd = 0;
 unsigned long _lastRresponse;
 bool  _heating_disable = false;
 bool  _dhw_disable = false;
+bool  _IsFlameOn = false;
 float _Tboiler = 0;
 bool  _Tboiler_notify = false;
 float _Tdhw = 0;
@@ -69,12 +70,6 @@ float _RelModLevel = 0;
 // clang-format on
 
 void notifyClients(String s) { ws.textAll(s); }
-
-float otGetFloat(const unsigned long response) {
-  const uint16_t u88 = response & 0xffff;
-  const float f = (u88 & 0x8000) ? -(0x10000L - u88) / 256.0f : u88 / 256.0f;
-  return f;
-}
 
 void processRequest(unsigned long request, OpenThermResponseStatus status) {
   const byte msgType = (request << 1) >> 29;
@@ -107,32 +102,36 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   Serial.println(slaveResponse);
   notifyClients(slaveResponse);
 
+  // Update the variables that you want logged
+  if (dataId == 0) { // Status
+    _IsFlameOn = mOT.isFlameOn(_lastRresponse);
+  }
   if (dataId == 1) { // Control setpoint ie CH water temperature setpoint (°C)
     _TSet_notify = true;
-    _TSet = otGetFloat(_lastRresponse);
+    _TSet = mOT.getFloat(_lastRresponse);
   }
   if (dataId == 16) { // Room Setpoint (°C)
     _TrSet_notify = true;
-    _TrSet = otGetFloat(_lastRresponse);
+    _TrSet = mOT.getFloat(_lastRresponse);
   }
-  if (msgType == 0 && dataId == 17) { // Relative Modulation Level (%)
-    _RelModLevel = otGetFloat(_lastRresponse);
+  if (dataId == 17) { // Relative Modulation Level (%)
+    _RelModLevel = mOT.getFloat(_lastRresponse);
   }
   if (dataId == 24) { // Room temperature (°C)
     _Tr_notify = true;
-    _Tr = otGetFloat(_lastRresponse);
+    _Tr = mOT.getFloat(_lastRresponse);
   }
-  if (msgType == 0 && dataId == 25) { // Boiler flow water temperature (°C)
+  if (dataId == 25) { // Boiler flow water temperature (°C)
     _Tboiler_notify = true;
-    _Tboiler = otGetFloat(_lastRresponse);
+    _Tboiler = mOT.getFloat(_lastRresponse);
   }
-  if (msgType == 0 && dataId == 26) { // DHW temperature (°C)
+  if (dataId == 26) { // DHW temperature (°C)
     _Tdhw_notify = true;
-    _Tdhw = otGetFloat(_lastRresponse);
+    _Tdhw = mOT.getFloat(_lastRresponse);
   }
   if (dataId == 56) { // DHW setpoint (°C)
     _TdhwSet_notify = true;
-    _TdhwSet = otGetFloat(_lastRresponse);
+    _TdhwSet = mOT.getFloat(_lastRresponse);
   }
 }
 
@@ -309,7 +308,7 @@ void loop() {
     ThingSpeak.setField(1, _Tboiler);
     ThingSpeak.setField(2, _TSet);
     ThingSpeak.setField(3, _RelModLevel);
-    ThingSpeak.setField(4, mOT.isFlameOn(_lastRresponse));
+    ThingSpeak.setField(4, _IsFlameOn);
     ThingSpeak.setField(5, _TrSet);
     ThingSpeak.setField(6, _Tr * 100);
 
