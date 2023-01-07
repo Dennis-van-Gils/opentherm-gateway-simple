@@ -25,6 +25,9 @@ const char index_html[] PROGMEM = R"rawliteral(
     <div class="wrapr">
       <table style="width: 100%" id="idd">
         <tr>
+          <button onclick="refreshCharts()">Refresh charts</button>
+        </tr>
+        <tr>
           <td class="label-column">From</td>
           <td style="width: auto">
             <input type="datetime-local" id="date-from" />

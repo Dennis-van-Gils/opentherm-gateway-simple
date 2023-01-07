@@ -191,6 +191,27 @@ function initUi(initOk) {
         minWidth: 40,
       },
     },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: false,
+          position: 'topRight',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    }
   };
   chart_Tboiler = new ApexCharts(document.querySelector("#chart-Tboiler"), options);
   chart_Tboiler.render();
@@ -238,6 +259,27 @@ function initUi(initOk) {
         minWidth: 40,
       },
     },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: false,
+          position: 'topRight',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    }
   };
   chart_Tr = new ApexCharts(document.querySelector("#chart-Tr"), options);
   chart_Tr.render();
@@ -294,6 +336,12 @@ function initUi(initOk) {
   chart_Flame = new ApexCharts(document.querySelector("#chart-Flame"), options);
   chart_Flame.render();
 
+  reloadAndUpdate();
+}
+
+function refreshCharts() {
+  document.querySelector("#date-from").value = formatDate(new Date().addHours(-2), 'T');
+  document.querySelector("#date-to").value = formatDate(new Date(), 'T');
   reloadAndUpdate();
 }
 
