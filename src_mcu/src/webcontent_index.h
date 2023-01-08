@@ -91,7 +91,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>
-      Boiler setpoint, &#x00B0;C
+      Central Heating setpoint, &#x00B0;C
       <div id="chart-Tset"></div>
       Boiler temperature, &#x00B0;C
       <div id="chart-Tboiler"></div>
