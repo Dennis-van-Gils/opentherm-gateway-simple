@@ -6,6 +6,7 @@ const char js[] PROGMEM = R"rawliteral(
 let chart_Tboiler;
 let chart_Flame;
 let chart_Tr;
+let chart_Tset;
 
 init();
 
@@ -54,6 +55,7 @@ function getData(dateFrom, dateTo) {
   _Tboiler = [];
   _Flame = [];
   _Tr = [];
+  _Tset = [];
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
@@ -62,6 +64,12 @@ function getData(dateFrom, dateTo) {
       _Tboiler.push([timeStamp, element.field1]);
     } else {
       _Tboiler.push([timeStamp, null]);
+    }
+
+    if (element.field2 > 0) {
+      _Tset.push([timeStamp, element.field2]);
+    } else {
+      _Tset.push([timeStamp, null]);
     }
 
     _Flame.push([timeStamp, element.field4]);
@@ -77,6 +85,7 @@ function getData(dateFrom, dateTo) {
     Tboiler: _Tboiler,
     Flame: _Flame,
     Tr: _Tr,
+    Tset: _Tset,
   };
 
   return ret;
@@ -98,6 +107,12 @@ function updateChart(data) {
   chart_Tr.updateSeries([
     {
       data: data.Tr,
+    },
+  ]);
+
+  chart_Tset.updateSeries([
+    {
+      data: data.Tset,
     },
   ]);
 }
@@ -215,6 +230,74 @@ function initUi(initOk) {
   };
   chart_Tboiler = new ApexCharts(document.querySelector("#chart-Tboiler"), options);
   chart_Tboiler.render();
+
+  options = {
+    series: [
+      {
+        data: [],
+      },
+    ],
+    chart: {
+      id: "chart2",
+      type: "area",
+      height: 350,
+      group: "heating",
+      toolbar: {
+        autoSelected: "pan",
+        show: false,
+      },
+    },
+    animations: {
+      enabled: false
+    },
+    stroke: {
+      curve: "stepline",
+      width: 3,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    fill: {
+      type: "solid",
+    },
+    markers: {
+      size: 0,
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      }
+    },
+    yaxis: {
+      labels: {
+        minWidth: 40,
+      },
+    },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: false,
+          position: 'topRight',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    }
+  };
+  chart_Tset = new ApexCharts(document.querySelector("#chart-Tset"), options);
+  chart_Tset.render();
 
   options = {
     series: [

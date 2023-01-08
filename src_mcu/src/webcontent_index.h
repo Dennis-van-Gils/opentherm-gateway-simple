@@ -87,10 +87,12 @@ const char index_html[] PROGMEM = R"rawliteral(
         </tr>
       </table>
     </div>
-    <div class="wrapr center" style="height: 850px" id="chart-container">
+    <div class="wrapr center" style="height: 1220px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>
+      Boiler setpoint, &#x00B0;C
+      <div id="chart-Tset"></div>
       Boiler temperature, &#x00B0;C
       <div id="chart-Tboiler"></div>
       Room temperature, &#x00B0;C
