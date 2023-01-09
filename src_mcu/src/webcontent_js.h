@@ -170,9 +170,78 @@ function initUi(initOk) {
       },
     ],
     chart: {
-      id: "chart2",
+      id: "chart",
       type: "area",
-      height: 350,
+      height: 75,
+      group: "heating",
+      toolbar: {
+        autoSelected: "pan",
+        show: false,
+      },
+    },
+    animations: {
+      enabled: false
+    },
+    stroke: {
+      curve: "stepline",
+      width: 3,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    fill: {
+      type: "solid",
+    },
+    markers: {
+      size: 0,
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      }
+    },
+    yaxis: {
+      show: false,
+      labels: {
+        minWidth: 40,
+      },
+    },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: true,
+          position: 'topLeft',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    }
+  };
+  chart_Flame = new ApexCharts(document.querySelector("#chart-Flame"), options);
+  chart_Flame.render();
+
+  options = {
+    series: [
+      {
+        data: [],
+      },
+    ],
+    chart: {
+      id: "chart",
+      type: "area",
+      height: 200,
       group: "heating",
       toolbar: {
         autoSelected: "pan",
@@ -221,8 +290,8 @@ function initUi(initOk) {
           show: true,
       },
       fixed: {
-          enabled: false,
-          position: 'topRight',
+          enabled: true,
+          position: 'topLeft',
           offsetX: 0,
           offsetY: 0,
       },
@@ -238,9 +307,9 @@ function initUi(initOk) {
       },
     ],
     chart: {
-      id: "chart2",
+      id: "chart",
       type: "area",
-      height: 350,
+      height: 200,
       group: "heating",
       toolbar: {
         autoSelected: "pan",
@@ -289,8 +358,8 @@ function initUi(initOk) {
           show: true,
       },
       fixed: {
-          enabled: false,
-          position: 'topRight',
+          enabled: true,
+          position: 'topLeft',
           offsetX: 0,
           offsetY: 0,
       },
@@ -306,9 +375,9 @@ function initUi(initOk) {
       },
     ],
     chart: {
-      id: "chart2",
+      id: "chart",
       type: "area",
-      height: 350,
+      height: 200,
       group: "heating",
       toolbar: {
         autoSelected: "pan",
@@ -357,8 +426,8 @@ function initUi(initOk) {
           show: true,
       },
       fixed: {
-          enabled: false,
-          position: 'topRight',
+          enabled: true,
+          position: 'topLeft',
           offsetX: 0,
           offsetY: 0,
       },
@@ -366,58 +435,6 @@ function initUi(initOk) {
   };
   chart_Tr = new ApexCharts(document.querySelector("#chart-Tr"), options);
   chart_Tr.render();
-
-  options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
-    chart: {
-      id: "chart-Flame",
-      type: "area",
-      height: 75,
-      group: "heating",
-      toolbar: {
-        autoSelected: "pan",
-        show: false,
-      },
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        show: false,
-      },
-    },
-    yaxis: {
-      show: false,
-      labels: {
-        minWidth: 40,
-      },
-    },
-    tooltip: {
-      enabled: false,
-    },
-  };
-
-  chart_Flame = new ApexCharts(document.querySelector("#chart-Flame"), options);
-  chart_Flame.render();
 
   reloadAndUpdate();
 }

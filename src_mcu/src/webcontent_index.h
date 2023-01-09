@@ -87,7 +87,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </tr>
       </table>
     </div>
-    <div class="wrapr center" style="height: 1220px" id="chart-container">
+    <div class="wrapr center" style="height: 770px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>

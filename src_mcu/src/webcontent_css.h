@@ -11,15 +11,6 @@ body {
   background: #f9f9f9;
 }
 
-#chart,
-.chart-box {
-  padding-top: 20px;
-  padding-left: 10px;
-  background: #fff;
-  border: 1px solid #ddd;
-  box-shadow: 0 22px 35px -16px rgba(0, 0, 0, 0.1);
-}
-
 select.flat-select {
   -moz-appearance: none;
   -webkit-appearance: none;
