@@ -139,6 +139,7 @@ function initUi(initOk) {
     reloadAndUpdate();
   });
 
+  /*
   document.querySelector("#heatingEnableInput").addEventListener("change", (event) => {
     try {
       const enable = document.querySelector("#heatingEnableInput").checked;
@@ -162,6 +163,7 @@ function initUi(initOk) {
     xhr.open("GET", url, false);
     xhr.send(null);
   });
+  */
 
   let options = {
     series: [

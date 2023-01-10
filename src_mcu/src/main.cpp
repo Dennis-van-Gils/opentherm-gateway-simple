@@ -75,6 +75,7 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   OpenThermMessageType msgType = mOT.getMessageType(request);
   OpenThermMessageID dataId = mOT.getDataID(request);
 
+  /*
   // Potentially modify thermostat request
   if (msgType == OpenThermMessageType::READ_DATA &&
       dataId == OpenThermMessageID::Status) {
@@ -90,6 +91,7 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
     if (mOT.parity(request))
       request |= (1ul << 31);
   }
+  */
 
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
@@ -214,6 +216,7 @@ void setup() {
     request->send_P(200, "text/html", index_html, htmlVarProcessor);
   });
 
+  /*
   server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest *request) {
     Serial.println("Heating disable override");
     request->send(200, "text/plain", "OK: heating off");
@@ -237,6 +240,7 @@ void setup() {
     request->send(200, "text/plain", "OK: dhw on");
     _dhw_disable = false;
   });
+  */
 
   server.on("/otgw-core.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response =
