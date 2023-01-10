@@ -87,7 +87,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </tr>
       </table>
     </div>
-    <div class="wrapr center" style="height: 770px" id="chart-container">
+    <div class="wrapr center" style="height: 1000px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>
@@ -95,6 +95,8 @@ const char index_html[] PROGMEM = R"rawliteral(
       <div id="chart-Tset"></div>
       Boiler temperature, &#x00B0;C
       <div id="chart-Tboiler"></div>
+      Modulation level, &#x0025;
+      <div id="chart-RelModLevel"></div>
       Room temperature, &#x00B0;C
       <div id="chart-Tr"></div>
     </div>

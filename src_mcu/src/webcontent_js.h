@@ -53,9 +53,10 @@ function getData(dateFrom, dateTo) {
   const responseObj = JSON.parse(xhr.responseText);
 
   _Tboiler = [];
+  _Tset = [];
+  _RelModLevel = [];
   _Flame = [];
   _Tr = [];
-  _Tset = [];
 
   responseObj.feeds.forEach((element) => {
     const timeStamp = new Date(element.created_at).getTime();
@@ -72,6 +73,7 @@ function getData(dateFrom, dateTo) {
       _Tset.push([timeStamp, null]);
     }
 
+    _RelModLevel.push([timeStamp, element.field3]);
     _Flame.push([timeStamp, element.field4]);
 
     if (element.field6 > 100) {
@@ -83,9 +85,10 @@ function getData(dateFrom, dateTo) {
 
   var ret = {
     Tboiler: _Tboiler,
+    Tset: _Tset,
+    RelModLevel: _RelModLevel,
     Flame: _Flame,
     Tr: _Tr,
-    Tset: _Tset,
   };
 
   return ret;
@@ -98,6 +101,18 @@ function updateChart(data) {
     },
   ]);
 
+  chart_Tset.updateSeries([
+    {
+      data: data.Tset,
+    },
+  ]);
+
+  chart_RelModLevel.updateSeries([
+    {
+      data: data.RelModLevel,
+    },
+  ]);
+
   chart_Flame.updateSeries([
     {
       data: data.Flame,
@@ -107,12 +122,6 @@ function updateChart(data) {
   chart_Tr.updateSeries([
     {
       data: data.Tr,
-    },
-  ]);
-
-  chart_Tset.updateSeries([
-    {
-      data: data.Tset,
     },
   ]);
 }
@@ -178,7 +187,7 @@ function initUi(initOk) {
       group: "heating",
       toolbar: {
         autoSelected: "pan",
-        show: false,
+        show: true,
       },
     },
     animations: {
@@ -247,7 +256,7 @@ function initUi(initOk) {
       group: "heating",
       toolbar: {
         autoSelected: "pan",
-        show: true,
+        show: false,
       },
     },
     animations: {
@@ -369,6 +378,74 @@ function initUi(initOk) {
   };
   chart_Tset = new ApexCharts(document.querySelector("#chart-Tset"), options);
   chart_Tset.render();
+
+  options = {
+    series: [
+      {
+        data: [],
+      },
+    ],
+    chart: {
+      id: "chart",
+      type: "area",
+      height: 200,
+      group: "heating",
+      toolbar: {
+        autoSelected: "pan",
+        show: false,
+      },
+    },
+    animations: {
+      enabled: false
+    },
+    stroke: {
+      curve: "stepline",
+      width: 3,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    fill: {
+      type: "solid",
+    },
+    markers: {
+      size: 0,
+    },
+    xaxis: {
+      type: "datetime",
+      labels: {
+        datetimeUTC: false,
+      }
+    },
+    yaxis: {
+      labels: {
+        minWidth: 40,
+      },
+    },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: true,
+          position: 'topLeft',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    }
+  };
+  chart_RelModLevel = new ApexCharts(document.querySelector("#chart-RelModLevel"), options);
+  chart_RelModLevel.render();
 
   options = {
     series: [
