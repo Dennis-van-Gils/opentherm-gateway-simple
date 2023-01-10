@@ -123,6 +123,15 @@ const char index_html[] PROGMEM = R"rawliteral(
             </label>
           </td>
         </tr>
+        <tr>
+          <td class="label-column">Boiler Diag. ind.</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_DiagInd" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
       </table>
     </div>
     <div class="wrapr center" style="height: 1000px" id="chart-container">

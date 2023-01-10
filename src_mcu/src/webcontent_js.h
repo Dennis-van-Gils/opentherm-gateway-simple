@@ -744,6 +744,7 @@ function onMessage(event) {
       document.getElementById("LED_CHmode").checked = ((dataValue & (1<<1)) != 0);
       document.getElementById("LED_DHWmode").checked = ((dataValue & (1<<2)) != 0);
       document.getElementById("LED_FlameStatus").checked = ((dataValue & (1<<3)) != 0);
+      document.getElementById("LED_DiagInd").checked = ((dataValue & (1<<6)) != 0);
     }
 
     const msgTypeStr = OpenThermMessageType[msgType];
