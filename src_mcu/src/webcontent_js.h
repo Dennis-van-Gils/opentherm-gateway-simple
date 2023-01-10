@@ -738,6 +738,13 @@ function onMessage(event) {
       document.getElementById("heatingEnableInput").checked = ((dataValue & (1<<8)) != 0);
       document.getElementById("dhwEnableInput").checked = ((dataValue & (1<<9)) != 0);
     }
+    if (msgType == 4 && dataId == 0)
+    {
+      document.getElementById("LED_Fault").checked = ((dataValue & 1) != 0);
+      document.getElementById("LED_CHmode").checked = ((dataValue & (1<<1)) != 0);
+      document.getElementById("LED_DHWmode").checked = ((dataValue & (1<<2)) != 0);
+      document.getElementById("LED_FlameStatus").checked = ((dataValue & (1<<3)) != 0);
+    }
 
     const msgTypeStr = OpenThermMessageType[msgType];
     const dataIdStr = OpenThermMessageID[dataId];

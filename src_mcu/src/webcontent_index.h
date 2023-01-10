@@ -86,6 +86,44 @@ const char index_html[] PROGMEM = R"rawliteral(
           </td>
         </tr>
       </table>
+      <table>
+        <tr>
+          <td class="label-column">Boiler fault</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_Fault" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Boiler CH mode</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_CHmode" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Boiler DHW mode</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_DHWmode" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Boiler Flame status</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_FlameStatus" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
+      </table>
     </div>
     <div class="wrapr center" style="height: 1000px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
