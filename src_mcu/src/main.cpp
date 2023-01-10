@@ -71,6 +71,15 @@ bool _dhw_disable = false;
 */
 // clang-format on
 
+// Boiler communication check
+// Check for any READ_ACK and WRITE_ACK messages coming back from the boiler.
+// If none are received within the set timeout window, the communication with
+// the boiler has probably failed. In that case: Restart and notify the user
+// by email.
+const uint16_t ACK_TIMEOUT = 10000; // Timeout [ms]
+bool ACK_timeout_notify = false;
+uint32_t t_last_ACK = millis();
+
 void notifyClients(String s) { ws.textAll(s); }
 
 void processRequest(unsigned long request, OpenThermResponseStatus status) {
@@ -97,6 +106,16 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
 
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
+
+  // Boiler communication check
+  OpenThermMessageType msgTypeBoiler = mOT.getMessageType(_lastRresponse);
+  if ((msgTypeBoiler == OpenThermMessageType::READ_ACK) ||
+      (msgTypeBoiler == OpenThermMessageType::WRITE_ACK)) {
+    t_last_ACK = millis();
+  }
+  if (millis() - t_last_ACK > ACK_TIMEOUT) {
+    ACK_timeout_notify = true;
+  }
 
   // Thermostat request
   String masterRequest = "T" + String(request, HEX);
@@ -288,6 +307,14 @@ void loop() {
 #ifdef ESP32
   esp_task_wdt_reset();
 #endif
+
+  // Boiler communication check
+  if (ACK_timeout_notify) {
+    ACK_timeout_notify = false;
+    notifyClients("!! ACK_TIMEOUT " + String(millis() - t_last_ACK));
+    sleep(12000); // Trigger the watchdog timer
+  }
+
   sOT.process();
   ws.cleanupClients();
 
