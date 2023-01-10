@@ -153,14 +153,14 @@
       <div id="chart-Tset"></div>
       Boiler temperature, &#x00B0;C
       <div id="chart-Tboiler"></div>
-      Modulation level, &#x0025;
-      <div id="chart-RelModLevel"></div>
       Room temperature, &#x00B0;C
       <div id="chart-Tr"></div>
+      Modulation level, &#x0025;
+      <div id="chart-RelModLevel"></div>
     </div>
 
     <div class="wrapr center">
-      <textarea style="height: 150px; width: 100%; min-width: 100%" id="commands-log"></textarea>
+      <textarea style="height: 158px; width: 100%; min-width: 100%" id="commands-log"></textarea>
     </div>
   </body>
 
