@@ -12,3 +12,5 @@ Forked from https://github.com/diyless/opentherm-gateway-simple and modified as 
 * Neater log using human-readable values
 * Added `Tr` and `TrSet` to the webpage and ThingSpeak
 * Fixed reporting incorrect `Flame status`
+* Added reporting boiler slave status bits
+* Commented out `disable CH` and `disable DHW` manual overrides
