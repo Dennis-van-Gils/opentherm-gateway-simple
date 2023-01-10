@@ -54,15 +54,15 @@ select.flat-select:hover {
 }
 
 .wrapr {
-  padding-top: 20px;
+  padding-top: 10px;
   padding-left: 10px;
-  padding-bottom: 20px;
+  padding-bottom: 10px;
   padding-right: 10px;
   background: #fff;
   border: 1px solid #ddd;
   box-shadow: 0 22px 35px -16px rgba(0, 0, 0, 0.1);
   max-width: 650px;
-  margin: 35px auto;
+  margin: 20px auto;
 }
 
 .center {

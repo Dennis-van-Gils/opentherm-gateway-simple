@@ -736,7 +736,7 @@ function onMessage(event) {
     if (msgType == 0 && dataId == 0)
     {
       document.getElementById("heatingEnableInput").checked = ((dataValue & (1<<8)) != 0);
-      document.getElementById("dhwEnableInput").checked = ((dataValue & (1<<9)) != 0);
+      //document.getElementById("dhwEnableInput").checked = ((dataValue & (1<<9)) != 0);
     }
     if (msgType == 4 && dataId == 0)
     {

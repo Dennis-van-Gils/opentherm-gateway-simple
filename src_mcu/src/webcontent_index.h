@@ -1,14 +1,15 @@
 #include <Arduino.h>
 
-// clang-format off
-const char index_html[] PROGMEM = R"rawliteral(
-<script type="text/javascript">
-  var ipAddr = "`IP_ADDR`";
-  var readToken = "`READ_TOKEN`";
-  var channelId = "`CHANNEL_ID`";
-</script>
-<!DOCTYPE html>
-<html lang="en">
+  // clang-format off
+  const char index_html[] PROGMEM = R"rawliteral(
+  <script type="text/javascript">
+    var ipAddr = "`IP_ADDR`";
+    var readToken = "`READ_TOKEN`";
+    var channelId = "`CHANNEL_ID`";
+  </script>
+  <!DOCTYPE html>
+  <html lang="en">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,40 +24,54 @@ const char index_html[] PROGMEM = R"rawliteral(
 
   <body>
     <div class="wrapr">
-      <table style="width: 100%" id="idd">
+      <table style="width: 100%">
         <tr>
-          <button onclick="refreshCharts()">Refresh charts</button>
+          <td style="width: auto" colspan="2">
+            <font size="+1"><b>Room</b></font>
+          </td>
+          <td style="width: auto" colspan="2">
+            <font size="+1"><b>Hot Water</b></font>
+          </td>
         </tr>
         <tr>
-          <td class="label-column">From</td>
-          <td style="width: auto">
-            <input type="datetime-local" id="date-from" />
-          </td>
-          <td class="label-column">Room setpoint, &#x00B0;C</td>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_TrSet">--</div>
           </td>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_TdhwSet">--</div>
+          </td>
         </tr>
         <tr>
-          <td class="label-column">To</td>
-          <td style="width: auto">
-            <input type="datetime-local" id="date-to" />
-          </td>
-          <td class="label-column">Room temperature, &#x00B0;C</td>
+          <td class="label-column">Temperature, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_Tr">--</div>
           </td>
+          <td class="label-column">Temperature, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_Tdhw">--</div>
+          </td>
         </tr>
-      </table>
-      <table style="width: 100%" id="idd">
         <tr>
-          <td class="label-column">Central Heating setpoint, &#x00B0;C</td>
+          <td style="width: auto" colspan="2">
+            <font size="+1"><b>Central Heating</b></font>
+          </td>
+          <td style="width: auto" colspan="2">
+            <font size="+1"><b>Boiler Status</b></font>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_TSet">--</div>
           </td>
-          <td class="label-column">Hot Water setpoint, &#x00B0;C</td>
+          <td class="label-column">Service</td>
           <td style="width: auto">
-            <div id="lbl_TdhwSet">--</div>
+            <label class="switch">
+              <input type="checkbox" id="LED_DiagInd" disabled />
+              <span class="slider round"></span>
+            </label>
           </td>
         </tr>
         <tr>
@@ -64,31 +79,7 @@ const char index_html[] PROGMEM = R"rawliteral(
           <td style="width: auto">
             <div id="lbl_Tboiler">--</div>
           </td>
-          <td class="label-column">Hot Water temperature, &#x00B0;C</td>
-          <td style="width: auto">
-            <div id="lbl_Tdhw">--</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="label-column">Central Heating enable</td>
-          <td style="width: auto">
-            <label class="switch">
-              <input type="checkbox" id="heatingEnableInput" disabled />
-              <span class="slider round"></span>
-            </label>
-          </td>
-          <td class="label-column">Hot Water enable</td>
-          <td style="width: auto">
-            <label class="switch">
-              <input type="checkbox" id="dhwEnableInput" disabled />
-              <span class="slider round"></span>
-            </label>
-          </td>
-        </tr>
-      </table>
-      <table>
-        <tr>
-          <td class="label-column">Boiler fault</td>
+          <td class="label-column">Fault</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_Fault" disabled />
@@ -97,7 +88,14 @@ const char index_html[] PROGMEM = R"rawliteral(
           </td>
         </tr>
         <tr>
-          <td class="label-column">Boiler CH mode</td>
+          <td class="label-column">CH enable</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="heatingEnableInput" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+          <td class="label-column">CH mode</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_CHmode" disabled />
@@ -106,7 +104,9 @@ const char index_html[] PROGMEM = R"rawliteral(
           </td>
         </tr>
         <tr>
-          <td class="label-column">Boiler DHW mode</td>
+          <td></td>
+          <td></td>
+          <td class="label-column">DHW mode</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_DHWmode" disabled />
@@ -115,7 +115,9 @@ const char index_html[] PROGMEM = R"rawliteral(
           </td>
         </tr>
         <tr>
-          <td class="label-column">Boiler Flame status</td>
+          <td></td>
+          <td></td>
+          <td class="label-column">Flame</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_FlameStatus" disabled />
@@ -123,18 +125,27 @@ const char index_html[] PROGMEM = R"rawliteral(
             </label>
           </td>
         </tr>
+      </table>
+      <table>
         <tr>
-          <td class="label-column">Boiler Diag. ind.</td>
+          <td>
+            <button onclick="refreshCharts()">Refresh charts</button>
+          </td>
+          <td class="label-column">From</td>
           <td style="width: auto">
-            <label class="switch">
-              <input type="checkbox" id="LED_DiagInd" disabled />
-              <span class="slider round"></span>
-            </label>
+            <input type="datetime-local" id="date-from" />
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="label-column">To</td>
+          <td style="width: auto">
+            <input type="datetime-local" id="date-to" />
           </td>
         </tr>
       </table>
     </div>
-    <div class="wrapr center" style="height: 1000px" id="chart-container">
+    <div class="wrapr center" style="height: 1010px" id="chart-container">
       <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
       Flame on/off
       <div id="chart-Flame"></div>
@@ -152,5 +163,6 @@ const char index_html[] PROGMEM = R"rawliteral(
       <textarea style="height: 150px; width: 100%; min-width: 100%" id="commands-log"></textarea>
     </div>
   </body>
-</html>
-)rawliteral";
+
+  </html>
+  )rawliteral";
