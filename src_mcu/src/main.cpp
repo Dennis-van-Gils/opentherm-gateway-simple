@@ -4,12 +4,13 @@
 #  include <WiFi.h>
 #  include <esp_task_wdt.h>
 #elif defined(ESP8266)
-#  include "src/ESPAsyncTCP/ESPAsyncTCP.h"
+#  include "ESPAsyncTCP.h"
 #  include <ESP8266WiFi.h>
 #endif
 #include "ESPAsyncWebServer.h"
+#include "ESP_Mail_Client.h"
+#include "OpenTherm.h"
 #include "ThingSpeak.h"
-#include <OpenTherm.h>
 
 // Web content
 #include "webcontent_css.h"
@@ -19,13 +20,13 @@
 
 // API settings
 #if __has_include("wifi_settings.h")
-#  include <wifi_settings.h>
+#  include "wifi_settings.h"
 #else
-#  include <wifi_settings_template.h>
+#  include "wifi_settings_template.h"
 #endif
 
 // Enable OTA updates
-#include <AsyncElegantOTA.h>
+#include "AsyncElegantOTA.h"
 
 // HW settings
 const int mInPin = 21;  // 2 for Arduino, 4 for ESP8266 (D2), 21 for ESP32
@@ -72,13 +73,42 @@ bool _dhw_disable = false;
 // clang-format on
 
 // Boiler communication check
+// --------------------------
 // Check for any READ_ACK and WRITE_ACK messages coming back from the boiler.
 // If none are received within the set timeout window, the communication with
-// the boiler has probably failed. In that case: Restart and notify the user
-// by email.
+// the boiler has probably failed. In that case: Notify the user by email and
+// restart the microcontroller.
 const uint16_t ACK_TIMEOUT = 10000; // Timeout [ms]
 bool ACK_timeout_notify = false;
 uint32_t t_last_ACK = millis();
+SMTPSession smtp; // The global used SMTPSession object for SMTP transport
+
+void sendAlertEmail() {
+  ESP_Mail_Session session;
+  session.server.host_name = SMTP_HOST;
+  session.server.port = SMTP_PORT;
+  session.login.email = AUTHOR_EMAIL;
+  session.login.password = AUTHOR_PASSWORD;
+  session.login.user_domain = F("mydomain.net");
+  session.time.ntp_server = F("pool.ntp.org,time.nist.gov");
+  session.time.gmt_offset = 3;
+  session.time.day_light_offset = 0;
+
+  SMTP_Message message;
+  message.sender.name = AUTHOR_NAME;
+  message.sender.email = AUTHOR_EMAIL;
+  message.subject = EMAIL_SUBJECT;
+  message.addRecipient("", RECIPIENT_EMAIL);
+  message.text.content = "";
+  message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_high;
+  // message.addHeader(F("Message-ID: <abcde.fghij@gmail.com>"));
+
+  if (!smtp.connect(&session))
+    return;
+
+  if (!MailClient.sendMail(&smtp, &message))
+    Serial.print("Error sending email, " + smtp.errorReason());
+}
 
 void notifyClients(String s) { ws.textAll(s); }
 
@@ -297,6 +327,10 @@ void setup() {
   mOT.begin(mHandleInterrupt);
   sOT.begin(sHandleInterrupt, processRequest);
 
+  // Set the network reconnection option
+  MailClient.networkReconnect(true);
+  smtp.debug(0);
+
 #ifdef ESP32
   esp_task_wdt_init(10, true); // enable panic so ESP32 restarts
   esp_task_wdt_add(NULL);      // add current thread to WDT watch
@@ -308,11 +342,21 @@ void loop() {
   esp_task_wdt_reset();
 #endif
 
+  /*
+  // DEBUG: Test sending email after 15 sec
+  static bool emailed_once = false;
+  if ((millis() > 15000) && !emailed_once) {
+    ACK_timeout_notify = true;
+    emailed_once = true;
+  }
+  */
+
   // Boiler communication check
   if (ACK_timeout_notify) {
     ACK_timeout_notify = false;
     notifyClients("!! ACK_TIMEOUT " + String(millis() - t_last_ACK));
-    sleep(12000); // Trigger the watchdog timer
+    sendAlertEmail();
+    sleep(12000); // Trigger the watchdog timer to reset the microcontroller
   }
 
   sOT.process();
