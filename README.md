@@ -14,3 +14,4 @@ Forked from https://github.com/diyless/opentherm-gateway-simple and modified as 
 * Fixed reporting incorrect `Flame status`
 * Added reporting boiler slave status bits
 * Commented out `disable CH` and `disable DHW` manual overrides
+* Added a boiler communication timeout check. It will email an alert and reset the ESP.
