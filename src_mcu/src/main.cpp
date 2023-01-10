@@ -51,22 +51,24 @@ void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
 // clang-format off
 int _thingSpeakUpd = 0;
 unsigned long _lastRresponse;
-bool  _heating_disable = false;
-bool  _dhw_disable = false;
 bool  _IsFlameOn = false;
-float _Tboiler = 0;
-bool  _Tboiler_notify = false;
-float _Tdhw = 0;
-bool  _Tdhw_notify = false;
-float _TdhwSet = 0;
-bool  _TdhwSet_notify = false;
+float _RelModLevel = 0;
 float _TSet = 0;
 bool  _TSet_notify = false;
-float _Tr = 0;
-bool  _Tr_notify = false;
+float _Tboiler = 0;
+bool  _Tboiler_notify = false;
+float _TdhwSet = 0;
+bool  _TdhwSet_notify = false;
+float _Tdhw = 0;
+bool  _Tdhw_notify = false;
 float _TrSet = 0;
 bool  _TrSet_notify = false;
-float _RelModLevel = 0;
+float _Tr = 0;
+bool  _Tr_notify = false;
+/*
+bool _heating_disable = false;
+bool _dhw_disable = false;
+*/
 // clang-format on
 
 void notifyClients(String s) { ws.textAll(s); }
@@ -109,40 +111,40 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   // Update the variables that you want logged
   // -----------------------------------------
 
-  // Status
+  // 0: Status
   if (dataId == OpenThermMessageID::Status) {
     _IsFlameOn = mOT.isFlameOn(_lastRresponse);
   }
-  // Control setpoint ie CH water temperature setpoint (°C)
+  // 1: Control setpoint ie CH water temperature setpoint (°C)
   if (dataId == OpenThermMessageID::TSet) {
     _TSet_notify = true;
     _TSet = mOT.getFloat(_lastRresponse);
   }
-  // Room Setpoint (°C)
+  // 16: Room Setpoint (°C)
   if (dataId == OpenThermMessageID::TrSet) {
     _TrSet_notify = true;
     _TrSet = mOT.getFloat(_lastRresponse);
   }
-  // Relative Modulation Level (%)
+  // 17: Relative Modulation Level (%)
   if (dataId == OpenThermMessageID::RelModLevel) {
     _RelModLevel = mOT.getFloat(_lastRresponse);
   }
-  // Room temperature (°C)
+  // 24: Room temperature (°C)
   if (dataId == OpenThermMessageID::Tr) {
     _Tr_notify = true;
     _Tr = mOT.getFloat(_lastRresponse);
   }
-  // Boiler flow water temperature (°C)
+  // 25: Boiler flow water temperature (°C)
   if (dataId == OpenThermMessageID::Tboiler) {
     _Tboiler_notify = true;
     _Tboiler = mOT.getFloat(_lastRresponse);
   }
-  // DHW temperature (°C)
+  // 26: DHW temperature (°C)
   if (dataId == OpenThermMessageID::Tdhw) {
     _Tdhw_notify = true;
     _Tdhw = mOT.getFloat(_lastRresponse);
   }
-  // DHW setpoint (°C)
+  // 56: DHW setpoint (°C)
   if (dataId == OpenThermMessageID::TdhwSet) {
     _TdhwSet_notify = true;
     _TdhwSet = mOT.getFloat(_lastRresponse);
