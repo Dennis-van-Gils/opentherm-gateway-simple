@@ -28,6 +28,10 @@
 // Enable OTA updates
 #include "AsyncElegantOTA.h"
 
+// Allow the user to force-disable the CH and DHW modes via the web interface?
+// Comment out to disable
+// #define ALLOW_USER_FORCE_DISABLE_CH_DHW
+
 // Print debug info over Serial?
 // Comment out to disable
 // #define DEBUG
@@ -86,10 +90,10 @@ float _TrSet = 0;
 bool  _TrSet_notify = false;
 float _Tr = 0;
 bool  _Tr_notify = false;
-/*
-bool _heating_disable = false;
-bool _dhw_disable = false;
-*/
+#ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
+bool  _heating_disable = false;
+bool  _dhw_disable = false;
+#endif
 // clang-format on
 
 // Boiler communication check
@@ -140,27 +144,27 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   OpenThermMessageType msgType = mOT.getMessageType(request);
   OpenThermMessageID dataId = mOT.getDataID(request);
 
-  /*
+#ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
   // Potentially modify thermostat request
   if (msgType == OpenThermMessageType::READ_DATA &&
       dataId == OpenThermMessageID::Status) {
     if (_heating_disable) {
-#ifdef DEBUG
+#  ifdef DEBUG
       Serial.println("Disable Heating");
-#endif
+#  endif
       request &= ~(1ul << (0 + 8));
     }
     if (_dhw_disable) {
-#ifdef DEBUG
+#  ifdef DEBUG
       Serial.println("Disable DHW");
-#endif
+#  endif
       request &= ~(1ul << (1 + 8));
     }
     request &= ~(1ul << 31);
     if (mOT.parity(request))
       request |= (1ul << 31);
   }
-  */
+#endif
 
   _lastRresponse = mOT.sendRequest(request);
   sOT.sendResponse(_lastRresponse);
@@ -314,39 +318,39 @@ void setup() {
     request->send_P(200, "text/html", index_html, htmlVarProcessor);
   });
 
-  /*
+#ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
   server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG
+#  ifdef DEBUG
     Serial.println("Heating disable override");
-#endif
+#  endif
     request->send(200, "text/plain", "OK: heating off");
     _heating_disable = true;
   });
 
   server.on("/heating-true", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG
+#  ifdef DEBUG
     Serial.println("Heating enable");
-#endif
+#  endif
     request->send(200, "text/plain", "OK: heating on");
     _heating_disable = false;
   });
 
   server.on("/dhw-false", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG
+#  ifdef DEBUG
     Serial.println("Domestic hot water disable override");
-#endif
+#  endif
     request->send(200, "text/plain", "OK: dhw off");
     _dhw_disable = true;
   });
 
   server.on("/dhw-true", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG
+#  ifdef DEBUG
     Serial.println("Domestic hot water enable");
-#endif
+#  endif
     request->send(200, "text/plain", "OK: dhw on");
     _dhw_disable = false;
   });
-  */
+#endif
 
   server.on("/otgw-core.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response =
