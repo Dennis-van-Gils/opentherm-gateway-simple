@@ -98,12 +98,13 @@ bool  _dhw_disable = false;
 
 // Boiler communication check
 // --------------------------
-// Check for any READ_ACK and WRITE_ACK messages coming back from the boiler.
+// Check for any WRITE_ACK messages coming back from the boiler.
 // If none are received within the set timeout window, the communication with
 // the boiler has probably failed. In that case: Notify the user by email and
 // restart the microcontroller.
 const uint16_t ACK_TIMEOUT = 10000; // Timeout [ms]
 bool ACK_timeout_notify = false;
+bool force_trigger_ACK_timeout = false; // DEBUG: Useful for testing
 uint32_t t_last_ACK = millis();
 SMTPSession smtp; // The global used SMTPSession object for SMTP transport
 
@@ -171,8 +172,7 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
 
   // Boiler communication check
   OpenThermMessageType msgTypeBoiler = mOT.getMessageType(_lastRresponse);
-  if ((msgTypeBoiler == OpenThermMessageType::READ_ACK) ||
-      (msgTypeBoiler == OpenThermMessageType::WRITE_ACK)) {
+  if (msgTypeBoiler == OpenThermMessageType::WRITE_ACK) {
     t_last_ACK = millis();
   }
   if (millis() - t_last_ACK > ACK_TIMEOUT) {
@@ -373,6 +373,11 @@ void setup() {
     request->send(response);
   });
 
+  server.on("/ack_timeout", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Force triggering an `ACK_TIMEOUT`");
+    force_trigger_ACK_timeout = true;
+  });
+
   // Enable OTA updates
   AsyncElegantOTA.begin(&server);
 
@@ -401,23 +406,20 @@ void loop() {
   esp_task_wdt_reset();
 #endif
 
-  /*
-  // DEBUG: Test sending email after 15 sec
-  static bool emailed_once = false;
-  if ((millis() > 15000) && !emailed_once) {
+  // DEBUG: Useful for testing
+  if (force_trigger_ACK_timeout) {
     ACK_timeout_notify = true;
-    emailed_once = true;
   }
-  */
 
   // Boiler communication check
   if (ACK_timeout_notify) {
+    // Send an `!! ACK_TIMEOUT` email to the user and reset the microcontroller
     ACK_timeout_notify = false;
     snprintf(char_buffer, CHAR_BUFFER_LEN, "!! ACK_TIMEOUT %u",
              millis() - t_last_ACK);
     notifyClients(char_buffer);
     sendAlertEmail();
-    sleep(12000); // Trigger the watchdog timer to reset the microcontroller
+    sleep(12000); // Trigger the watchdog timer
   }
 
   sOT.process();
