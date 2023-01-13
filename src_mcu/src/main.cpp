@@ -28,6 +28,26 @@
 // Enable OTA updates
 #include "AsyncElegantOTA.h"
 
+// Print debug info over Serial?
+// Comment out to disable
+// #define DEBUG
+
+// Common character array, used by many functions.
+const uint16_t CHAR_BUFFER_LEN = 64;
+char char_buffer[CHAR_BUFFER_LEN] = {'\0'};
+
+// Print a float value left-aligned to character array `buffer` using two digits
+// of precision, prepended by character array `text`. Output looks like
+// "text12.34".
+void build_notify_msg(char *buffer, uint16_t buffer_len, const char *text,
+                      float value) {
+  const uint8_t FLOAT_BUFFER_LEN = 10;
+  char float_buffer[FLOAT_BUFFER_LEN] = {'\0'};
+
+  dtostrf(value, -(FLOAT_BUFFER_LEN - 1), 2, float_buffer);
+  snprintf(buffer, buffer_len, "%s%s", text, float_buffer);
+}
+
 // HW settings
 const int mInPin = 21;  // 2 for Arduino, 4 for ESP8266 (D2), 21 for ESP32
 const int mOutPin = 22; // 4 for Arduino, 5 for ESP8266 (D1), 22 for ESP32
@@ -106,11 +126,15 @@ void sendAlertEmail() {
   if (!smtp.connect(&session))
     return;
 
-  if (!MailClient.sendMail(&smtp, &message))
-    Serial.print("Error sending email, " + smtp.errorReason());
+  if (!MailClient.sendMail(&smtp, &message)) {
+#ifdef DEBUG
+    Serial.print("Error sending email, ");
+    Serial.println(smtp.errorReason());
+#endif
+  }
 }
 
-void notifyClients(String s) { ws.textAll(s); }
+void notifyClients(const char *s) { ws.textAll(s); }
 
 void processRequest(unsigned long request, OpenThermResponseStatus status) {
   OpenThermMessageType msgType = mOT.getMessageType(request);
@@ -121,11 +145,15 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   if (msgType == OpenThermMessageType::READ_DATA &&
       dataId == OpenThermMessageID::Status) {
     if (_heating_disable) {
+#ifdef DEBUG
       Serial.println("Disable Heating");
+#endif
       request &= ~(1ul << (0 + 8));
     }
     if (_dhw_disable) {
+#ifdef DEBUG
       Serial.println("Disable DHW");
+#endif
       request &= ~(1ul << (1 + 8));
     }
     request &= ~(1ul << 31);
@@ -147,15 +175,19 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
     ACK_timeout_notify = true;
   }
 
-  // Thermostat request
-  String masterRequest = "T" + String(request, HEX);
-  Serial.println(masterRequest + " " + String(request, BIN));
-  notifyClients(masterRequest);
+  // Thermostat `master` request
+  snprintf(char_buffer, CHAR_BUFFER_LEN, "T%08x", request);
+#ifdef DEBUG
+  Serial.println(char_buffer);
+#endif
+  notifyClients(char_buffer);
 
-  // Boiler response
-  String slaveResponse = "B" + String(_lastRresponse, HEX);
-  Serial.println(slaveResponse);
-  notifyClients(slaveResponse);
+  // Boiler 'slave' response
+  snprintf(char_buffer, CHAR_BUFFER_LEN, "B%08x", _lastRresponse);
+#ifdef DEBUG
+  Serial.println(char_buffer);
+#endif
+  notifyClients(char_buffer);
 
   // Update the variables that you want logged
   // -----------------------------------------
@@ -212,11 +244,15 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
              AwsEventType type, void *arg, uint8_t *data, size_t len) {
   switch (type) {
     case WS_EVT_CONNECT:
+#ifdef DEBUG
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(),
                     client->remoteIP().toString().c_str());
+#endif
       break;
     case WS_EVT_DISCONNECT:
+#ifdef DEBUG
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
+#endif
       break;
     case WS_EVT_DATA:
       handleWebSocketMessage(arg, data, len);
@@ -233,8 +269,13 @@ void initWebSocket() {
 }
 
 void notFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found " + request->url());
-  Serial.println("Not found " + request->url());
+  snprintf(char_buffer, CHAR_BUFFER_LEN, "%s", "Not found, ");
+  // Will truncate an excessively long url
+  request->url().toCharArray(&char_buffer[11], CHAR_BUFFER_LEN - 12);
+#ifdef DEBUG
+  Serial.println(char_buffer);
+#endif
+  request->send(404, "text/plain", char_buffer);
 }
 
 String htmlVarProcessor(const String &var) {
@@ -251,17 +292,23 @@ String htmlVarProcessor(const String &var) {
 }
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(9600);
   Serial.println("WiFi...");
+#endif
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.print("WiFi Failed!\n");
+#ifdef DEBUG
+    Serial.println("WiFi Failed!");
+#endif
     return;
   }
 
+#ifdef DEBUG
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
+#endif
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", index_html, htmlVarProcessor);
@@ -269,25 +316,33 @@ void setup() {
 
   /*
   server.on("/heating-false", HTTP_GET, [](AsyncWebServerRequest *request) {
+#ifdef DEBUG
     Serial.println("Heating disable override");
+#endif
     request->send(200, "text/plain", "OK: heating off");
     _heating_disable = true;
   });
 
   server.on("/heating-true", HTTP_GET, [](AsyncWebServerRequest *request) {
+#ifdef DEBUG
     Serial.println("Heating enable");
+#endif
     request->send(200, "text/plain", "OK: heating on");
     _heating_disable = false;
   });
 
   server.on("/dhw-false", HTTP_GET, [](AsyncWebServerRequest *request) {
+#ifdef DEBUG
     Serial.println("Domestic hot water disable override");
+#endif
     request->send(200, "text/plain", "OK: dhw off");
     _dhw_disable = true;
   });
 
   server.on("/dhw-true", HTTP_GET, [](AsyncWebServerRequest *request) {
+#ifdef DEBUG
     Serial.println("Domestic hot water enable");
+#endif
     request->send(200, "text/plain", "OK: dhw on");
     _dhw_disable = false;
   });
@@ -354,7 +409,9 @@ void loop() {
   // Boiler communication check
   if (ACK_timeout_notify) {
     ACK_timeout_notify = false;
-    notifyClients("!! ACK_TIMEOUT " + String(millis() - t_last_ACK));
+    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! ACK_TIMEOUT %u",
+             millis() - t_last_ACK);
+    notifyClients(char_buffer);
     sendAlertEmail();
     sleep(12000); // Trigger the watchdog timer to reset the microcontroller
   }
@@ -364,27 +421,33 @@ void loop() {
 
   if (_TSet_notify) {
     _TSet_notify = false;
-    notifyClients("A:" + String(_TSet));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "A:", _TSet);
+    notifyClients(char_buffer);
   }
   if (_Tboiler_notify) {
     _Tboiler_notify = false;
-    notifyClients("B:" + String(_Tboiler));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "B:", _Tboiler);
+    notifyClients(char_buffer);
   }
   if (_TdhwSet_notify) {
     _TdhwSet_notify = false;
-    notifyClients("C:" + String(_TdhwSet));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "C:", _TdhwSet);
+    notifyClients(char_buffer);
   }
   if (_Tdhw_notify) {
     _Tdhw_notify = false;
-    notifyClients("D:" + String(_Tdhw));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "D:", _Tdhw);
+    notifyClients(char_buffer);
   }
   if (_TrSet_notify) {
     _TrSet_notify = false;
-    notifyClients("E:" + String(_TrSet));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "E:", _TrSet);
+    notifyClients(char_buffer);
   }
   if (_Tr_notify) {
     _Tr_notify = false;
-    notifyClients("F:" + String(_Tr));
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "F:", _Tr);
+    notifyClients(char_buffer);
   }
 
   if (_thingSpeakUpd < millis()) {
@@ -402,10 +465,13 @@ void loop() {
     ThingSpeak.setField(6, _Tr * 100);
 
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+#ifdef DEBUG
     if (x == 200) {
       Serial.println("Channel update successful.");
     } else {
-      Serial.println("Problem updating channel. HTTP error code " + String(x));
+      Serial.print("Problem updating channel. HTTP error code ");
+      Serial.println(x);
     }
+#endif
   }
 }
