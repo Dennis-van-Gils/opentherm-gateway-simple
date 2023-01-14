@@ -1,3 +1,12 @@
+/*
+DEV NOTE: Use `unsigned long` instead of `uint32_t`.
+  https://github.com/espressif/arduino-esp32/issues/384
+  "So the only way to allow libraries to be portable between ESP32 Arduino core
+  and other cores is to use unsigned long for the return value. Yes, this is
+  ambiguous (there could be a platform with 64-bit long), but language-wise this
+  is the only way to remain compatible with other cores."
+*/
+
 #include <Arduino.h>
 #ifdef ESP32
 #  include "AsyncTCP.h"
@@ -96,17 +105,22 @@ bool  _dhw_disable = false;
 #endif
 // clang-format on
 
+// Watchdog timer
+const unsigned long WDT_TIMEOUT = 30000;     // Timeout [ms]
+const unsigned long WDT_RESET_PERIOD = 1000; // Slow down reset on purpose [ms]
+unsigned long t_WDT_reset = millis();        // Time of last watchdog reset
+
 // Boiler communication check
 // --------------------------
 // Check for any WRITE_ACK messages coming back from the boiler.
 // If none are received within the set timeout window, the communication with
 // the boiler has probably failed. In that case: Notify the user by email and
-// restart the microcontroller.
-const uint16_t ACK_TIMEOUT = 10000; // Timeout [ms]
-bool ACK_timeout_notify = false;
-bool force_trigger_ACK_timeout = false; // DEBUG: Useful for testing
-uint32_t t_last_ACK = millis();
-SMTPSession smtp; // The global used SMTPSession object for SMTP transport
+// restart the microcontroller by triggering the watchdog timer.
+const unsigned long ACK_TIMEOUT = 30000; // Timeout [ms]
+unsigned long t_ACK = millis();          // Time of last received WRITE_ACK msg
+bool ACK_timeout_notify = false;         // True when timed out
+bool force_trigger_ACK_timeout = false;  // DEBUG: Useful for testing
+SMTPSession smtp;                        // To allow sending email
 
 void sendAlertEmail() {
   ESP_Mail_Session session;
@@ -173,9 +187,9 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
   // Boiler communication check
   OpenThermMessageType msgTypeBoiler = mOT.getMessageType(_lastRresponse);
   if (msgTypeBoiler == OpenThermMessageType::WRITE_ACK) {
-    t_last_ACK = millis();
+    t_ACK = millis();
   }
-  if (millis() - t_last_ACK > ACK_TIMEOUT) {
+  if (millis() - t_ACK > ACK_TIMEOUT) {
     ACK_timeout_notify = true;
   }
 
@@ -295,6 +309,10 @@ String htmlVarProcessor(const String &var) {
   return String();
 }
 
+/*------------------------------------------------------------------------------
+  setup
+------------------------------------------------------------------------------*/
+
 void setup() {
 #ifdef DEBUG
   Serial.begin(9600);
@@ -396,14 +414,25 @@ void setup() {
   smtp.debug(0);
 
 #ifdef ESP32
-  esp_task_wdt_init(10, true); // enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL);      // add current thread to WDT watch
+  // Watchdog timer
+  esp_task_wdt_init(WDT_TIMEOUT, true);
+  esp_task_wdt_add(NULL);
 #endif
 }
 
+/*------------------------------------------------------------------------------
+  loop
+------------------------------------------------------------------------------*/
+
 void loop() {
+  unsigned long now = millis();
+
 #ifdef ESP32
-  esp_task_wdt_reset();
+  // Watchdog timer
+  if (now - t_WDT_reset > WDT_RESET_PERIOD) {
+    t_WDT_reset = now;
+    esp_task_wdt_reset();
+  }
 #endif
 
   // DEBUG: Useful for testing
@@ -415,11 +444,10 @@ void loop() {
   if (ACK_timeout_notify) {
     // Send an `!! ACK_TIMEOUT` email to the user and reset the microcontroller
     ACK_timeout_notify = false;
-    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! ACK_TIMEOUT %u",
-             millis() - t_last_ACK);
+    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! ACK_TIMEOUT %u", now - t_ACK);
     notifyClients(char_buffer);
     sendAlertEmail();
-    sleep(12000); // Trigger the watchdog timer
+    sleep(WDT_TIMEOUT + 1000); // Trigger the watchdog timer
   }
 
   sOT.process();
