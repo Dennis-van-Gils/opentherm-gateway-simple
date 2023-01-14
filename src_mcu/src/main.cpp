@@ -84,7 +84,6 @@ void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
 
 // clang-format off
 int _thingSpeakUpd = 0;
-unsigned long _lastRresponse;
 bool  _IsFlameOn = false;
 float _RelModLevel = 0;
 float _TSet = 0;
@@ -155,53 +154,69 @@ void sendAlertEmail() {
 
 void notifyClients(const char *s) { ws.textAll(s); }
 
-void processRequest(unsigned long request, OpenThermResponseStatus status) {
-  OpenThermMessageType msgType = mOT.getMessageType(request);
-  OpenThermMessageID dataId = mOT.getDataID(request);
+void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
+  /* Some explanation:
+  sOT: Instance linked to the 'slave' OpenTherm shield. It receives requests
+       coming from the master thermostat and sends responses back to it.
+  mOT: Instance linked to the 'master' OpenTherm shield. It sends requests to
+       the slave boiler and receives responses coming back from it.
+  */
+  OpenThermMessageType sOT_msgType = sOT.getMessageType(sOT_request);
+  OpenThermMessageID sOT_dataId = sOT.getDataID(sOT_request);
 
 #ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
   // Potentially modify thermostat request
-  if (msgType == OpenThermMessageType::READ_DATA &&
-      dataId == OpenThermMessageID::Status) {
+  if (sOT_msgType == OpenThermMessageType::READ_DATA &&
+      sOT_dataId == OpenThermMessageID::Status) {
+
     if (_heating_disable) {
 #  ifdef DEBUG
       Serial.println("Disable Heating");
 #  endif
-      request &= ~(1ul << (0 + 8));
+      sOT_request &= ~(1ul << (0 + 8));
     }
+
     if (_dhw_disable) {
 #  ifdef DEBUG
       Serial.println("Disable DHW");
 #  endif
-      request &= ~(1ul << (1 + 8));
+      sOT_request &= ~(1ul << (1 + 8));
     }
-    request &= ~(1ul << 31);
-    if (mOT.parity(request))
-      request |= (1ul << 31);
+    sOT_request &= ~(1ul << 31);
+
+    if (mOT.parity(sOT_request)) {
+      sOT_request |= (1ul << 31);
+    }
   }
 #endif
 
-  _lastRresponse = mOT.sendRequest(request);
-  sOT.sendResponse(_lastRresponse);
+  // Send the intercepted (and potentially modified) thermostat request further
+  // downstream to the boiler and listen for the boiler's response.
+  unsigned long mOT_response = mOT.sendRequest(sOT_request);
 
-  // Boiler communication check
-  OpenThermMessageType msgTypeBoiler = mOT.getMessageType(_lastRresponse);
-  if (msgTypeBoiler == OpenThermMessageType::WRITE_ACK) {
-    t_ACK = millis();
-  }
-  if (millis() - t_ACK > ACK_TIMEOUT) {
-    ACK_timeout_notify = true;
+  if (mOT_response) {
+    // A boiler response is waiting to be processed. Send this intercepted
+    // response further upstream to the thermostat
+    sOT.sendResponse(mOT_response);
+
+    // Boiler communication check
+    if (mOT.getMessageType(mOT_response) == OpenThermMessageType::WRITE_ACK) {
+      t_ACK = millis();
+    }
+    if (millis() - t_ACK > ACK_TIMEOUT) {
+      ACK_timeout_notify = true;
+    }
   }
 
-  // Thermostat `master` request
-  snprintf(char_buffer, CHAR_BUFFER_LEN, "T%08x", request);
+  // Inform the webclients about the thermostat `master` request
+  snprintf(char_buffer, CHAR_BUFFER_LEN, "T%08x", sOT_request);
 #ifdef DEBUG
   Serial.println(char_buffer);
 #endif
   notifyClients(char_buffer);
 
-  // Boiler 'slave' response
-  snprintf(char_buffer, CHAR_BUFFER_LEN, "B%08x", _lastRresponse);
+  // Inform the webclients about the boiler 'slave' response
+  snprintf(char_buffer, CHAR_BUFFER_LEN, "B%08x", mOT_response);
 #ifdef DEBUG
   Serial.println(char_buffer);
 #endif
@@ -209,44 +224,45 @@ void processRequest(unsigned long request, OpenThermResponseStatus status) {
 
   // Update the variables that you want logged
   // -----------------------------------------
-
-  // 0: Status
-  if (dataId == OpenThermMessageID::Status) {
-    _IsFlameOn = mOT.isFlameOn(_lastRresponse);
-  }
-  // 1: Control setpoint ie CH water temperature setpoint (°C)
-  if (dataId == OpenThermMessageID::TSet) {
-    _TSet_notify = true;
-    _TSet = mOT.getFloat(_lastRresponse);
-  }
-  // 16: Room Setpoint (°C)
-  if (dataId == OpenThermMessageID::TrSet) {
-    _TrSet_notify = true;
-    _TrSet = mOT.getFloat(_lastRresponse);
-  }
-  // 17: Relative Modulation Level (%)
-  if (dataId == OpenThermMessageID::RelModLevel) {
-    _RelModLevel = mOT.getFloat(_lastRresponse);
-  }
-  // 24: Room temperature (°C)
-  if (dataId == OpenThermMessageID::Tr) {
-    _Tr_notify = true;
-    _Tr = mOT.getFloat(_lastRresponse);
-  }
-  // 25: Boiler flow water temperature (°C)
-  if (dataId == OpenThermMessageID::Tboiler) {
-    _Tboiler_notify = true;
-    _Tboiler = mOT.getFloat(_lastRresponse);
-  }
-  // 26: DHW temperature (°C)
-  if (dataId == OpenThermMessageID::Tdhw) {
-    _Tdhw_notify = true;
-    _Tdhw = mOT.getFloat(_lastRresponse);
-  }
-  // 56: DHW setpoint (°C)
-  if (dataId == OpenThermMessageID::TdhwSet) {
-    _TdhwSet_notify = true;
-    _TdhwSet = mOT.getFloat(_lastRresponse);
+  if (mOT_response) {
+    // 0: Status
+    if (sOT_dataId == OpenThermMessageID::Status) {
+      _IsFlameOn = mOT.isFlameOn(mOT_response);
+    }
+    // 1: Control setpoint ie CH water temperature setpoint (°C)
+    if (sOT_dataId == OpenThermMessageID::TSet) {
+      _TSet_notify = true;
+      _TSet = mOT.getFloat(mOT_response);
+    }
+    // 16: Room Setpoint (°C)
+    if (sOT_dataId == OpenThermMessageID::TrSet) {
+      _TrSet_notify = true;
+      _TrSet = mOT.getFloat(mOT_response);
+    }
+    // 17: Relative Modulation Level (%)
+    if (sOT_dataId == OpenThermMessageID::RelModLevel) {
+      _RelModLevel = mOT.getFloat(mOT_response);
+    }
+    // 24: Room temperature (°C)
+    if (sOT_dataId == OpenThermMessageID::Tr) {
+      _Tr_notify = true;
+      _Tr = mOT.getFloat(mOT_response);
+    }
+    // 25: Boiler flow water temperature (°C)
+    if (sOT_dataId == OpenThermMessageID::Tboiler) {
+      _Tboiler_notify = true;
+      _Tboiler = mOT.getFloat(mOT_response);
+    }
+    // 26: DHW temperature (°C)
+    if (sOT_dataId == OpenThermMessageID::Tdhw) {
+      _Tdhw_notify = true;
+      _Tdhw = mOT.getFloat(mOT_response);
+    }
+    // 56: DHW setpoint (°C)
+    if (sOT_dataId == OpenThermMessageID::TdhwSet) {
+      _TdhwSet_notify = true;
+      _TdhwSet = mOT.getFloat(mOT_response);
+    }
   }
 }
 
