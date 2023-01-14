@@ -224,7 +224,7 @@ void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
 
   // Update the variables that you want logged
   // -----------------------------------------
-  if (mOT_response) {
+  if (mOT.isValidResponse(mOT_response)) {
     // 0: Status
     if (sOT_dataId == OpenThermMessageID::Status) {
       _IsFlameOn = mOT.isFlameOn(mOT_response);
