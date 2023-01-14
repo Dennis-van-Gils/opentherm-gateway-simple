@@ -98,6 +98,8 @@ float _TrSet = 0;
 bool  _TrSet_notify = false;
 float _Tr = 0;
 bool  _Tr_notify = false;
+float _MaxTSet = 0;
+bool  _MaxTSet_notify = false;
 #ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
 bool  _heating_disable = false;
 bool  _dhw_disable = false;
@@ -262,6 +264,11 @@ void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
     if (sOT_dataId == OpenThermMessageID::TdhwSet) {
       _TdhwSet_notify = true;
       _TdhwSet = mOT.getFloat(mOT_response);
+    }
+    // 57: Max CH water setpoint (°C)
+    if (sOT_dataId == OpenThermMessageID::MaxTSet) {
+      _MaxTSet_notify = true;
+      _MaxTSet = mOT.getFloat(mOT_response);
     }
   }
 }
@@ -497,6 +504,11 @@ void loop() {
   if (_Tr_notify) {
     _Tr_notify = false;
     build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "F:", _Tr);
+    notifyClients(char_buffer);
+  }
+  if (_MaxTSet_notify) {
+    _MaxTSet_notify = false;
+    build_notify_msg(char_buffer, CHAR_BUFFER_LEN, "G:", _MaxTSet);
     notifyClients(char_buffer);
   }
 

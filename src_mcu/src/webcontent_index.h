@@ -104,8 +104,10 @@
           </td>
         </tr>
         <tr>
-          <td></td>
-          <td></td>
+          <td class="label-column">Max setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_MaxTSet">--</div>
+          </td>
           <td class="label-column">DHW mode</td>
           <td style="width: auto">
             <label class="switch">

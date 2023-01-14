@@ -721,6 +721,8 @@ function onMessage(event) {
     document.getElementById("lbl_TrSet").innerText = msgData.slice(2);
   } else if (msgKind == "F:") {
     document.getElementById("lbl_Tr").innerText = msgData.slice(2);
+  } else if (msgKind == "G:") {
+    document.getElementById("lbl_MaxTSet").innerText = msgData.slice(2);
   } else if (msgKind == "!!") {
   } else {
     const numberData = msgData.slice(1);
