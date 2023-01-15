@@ -116,12 +116,11 @@ unsigned long t_WDT_reset = millis();        // Time of last watchdog reset
 // Check for any WRITE_ACK messages coming back from the boiler.
 // If none are received within the set timeout window, the communication with
 // the boiler has probably failed. In that case: Notify the user by email and
-// restart the microcontroller by triggering the watchdog timer.
-const unsigned long ACK_TIMEOUT = 30000; // Timeout [ms]
-unsigned long t_ACK = millis();          // Time of last received WRITE_ACK msg
-bool ACK_timeout_notify = false;         // True when timed out
-bool force_trigger_ACK_timeout = false;  // DEBUG: Useful for testing
-SMTPSession smtp;                        // To allow sending email
+// reset the microcontroller.
+const unsigned long WRITE_ACK_TIMEOUT = 30000; // Timeout [ms]
+unsigned long t_WRITE_ACK = millis();          // Time of last WRITE_ACK
+bool trigger_reset = false;                    // When true will reset the MCU
+SMTPSession smtp;                              // To allow sending email
 
 void sendAlertEmail() {
   ESP_Mail_Session session;
@@ -204,10 +203,7 @@ void processRequest(unsigned long sOT_request,
 
     // Boiler communication check
     if (mOT.getMessageType(mOT_response) == OpenThermMessageType::WRITE_ACK) {
-      t_ACK = millis();
-    }
-    if (millis() - t_ACK > ACK_TIMEOUT) {
-      ACK_timeout_notify = true;
+      t_WRITE_ACK = millis();
     }
   }
 
@@ -415,9 +411,11 @@ void setup() {
     request->send(response);
   });
 
-  server.on("/ack_timeout", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Force triggering an `ACK_TIMEOUT`");
-    force_trigger_ACK_timeout = true;
+  server.on("/trigger_reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    snprintf(char_buffer, CHAR_BUFFER_LEN,
+             "Force triggering a reset in %u seconds", WDT_TIMEOUT / 1000);
+    request->send(200, "text/plain", char_buffer);
+    trigger_reset = true;
   });
 
   // Enable OTA updates
@@ -459,19 +457,21 @@ void loop() {
   }
 #endif
 
-  // DEBUG: Useful for testing
-  if (force_trigger_ACK_timeout) {
-    ACK_timeout_notify = true;
-  }
-
   // Boiler communication check
-  if (ACK_timeout_notify) {
-    // Send an `!! ACK_TIMEOUT` email to the user and reset the microcontroller
-    ACK_timeout_notify = false;
-    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! ACK_TIMEOUT %u", now - t_ACK);
+  if (now - t_WRITE_ACK > WRITE_ACK_TIMEOUT) {
+    trigger_reset = true;
+  }
+  if (trigger_reset) {
+    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! RESET TRIGGERED, %u",
+             now - t_WRITE_ACK);
     notifyClients(char_buffer);
     sendAlertEmail();
-    sleep(WDT_TIMEOUT + 1000); // Trigger the watchdog timer
+#ifdef ESP32
+    delay(WDT_TIMEOUT); // Wait a long time; prevents fast-cycling resets
+    ESP.restart();
+#else
+    delay(WDT_TIMEOUT); // Trigger the watchdog timer
+#endif
   }
 
   sOT.process();
