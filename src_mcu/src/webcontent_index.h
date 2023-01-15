@@ -128,7 +128,7 @@
           </td>
         </tr>
       </table>
-      <table>
+      <table style="width: 100%">
         <tr>
           <td>
             <button onclick="refreshCharts()">Refresh charts</button>
@@ -143,6 +143,9 @@
           <td class="label-column">To</td>
           <td style="width: auto">
             <input type="datetime-local" id="date-to" />
+          </td>
+          <td style="width: auto; text-align: center;">
+            <div id="lbl_timestamp"></div>
           </td>
         </tr>
       </table>

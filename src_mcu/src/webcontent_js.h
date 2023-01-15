@@ -708,8 +708,11 @@ function onMessage(event) {
   const msgData = event.data;
   console.log(`onMessage ${msgData}`);
 
-  var text = document.getElementById("commands-log");
   var date = new Date();
+  var date_str = formatTime(date);
+  document.getElementById("lbl_timestamp").innerText = date_str;
+
+  var text = document.getElementById("commands-log");
   var log = text.value;
   log = log.substring(log.length - 500000);
 
@@ -729,7 +732,7 @@ function onMessage(event) {
   } else if (msgKind == "G:") {
     document.getElementById("lbl_MaxTSet").innerText = msgData.slice(2);
   } else if (msgKind == "!!") {
-    text.value = log + formatTime(date) + ` !! RESET TRIGGERED\r\n`;
+    text.value = log + date_str + ` !! RESET TRIGGERED\r\n`;
   } else {
     const numberData = msgData.slice(1);
     const int = parseInt(Number(`0x${numberData}`), 10);
@@ -754,14 +757,11 @@ function onMessage(event) {
 
     const msgTypeStr = OpenThermMessageType[msgType];
     const dataIdStr = OpenThermMessageID[dataId];
-    text.value = log +
-      formatTime(date) + ` ` +
-      // pad(`0`.repeat(10), int, true) + ` ` +
+    text.value = log + date_str + ` ` +
       pad(` `.repeat(15), msgTypeStr, false) + ` | ` +
       pad(` `.repeat(3) , dataId, false) + ` | ` +
       pad(` `.repeat(22), dataIdStr, false) + ` | ` +
-        transform_reading(dataId, dataValue) +
-        `\r\n`;
+      transform_reading(dataId, dataValue) + `\r\n`;
   }
   text.scrollTop = text.scrollHeight;
 }
