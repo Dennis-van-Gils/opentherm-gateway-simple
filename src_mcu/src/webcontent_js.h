@@ -39,7 +39,6 @@ function init() {
   });
 }
 
-
 function getData(dateFrom, dateTo) {
   // "https://api.thingspeak.com/channels/<channel-id>/feeds.json?api_key=<read-api-key>&offset=<tz-offset>&start=<start-datetime>&end=<end-datetime>&round=0"
   const tzOffset = new Date().getTimezoneOffset() / -60;
@@ -49,7 +48,6 @@ function getData(dateFrom, dateTo) {
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, false);
   xhr.send(null);
-
   const responseObj = JSON.parse(xhr.responseText);
 
   _Tboiler = [];
@@ -95,41 +93,16 @@ function getData(dateFrom, dateTo) {
 }
 
 function updateChart(data) {
-  chart_Tboiler.updateSeries([
-    {
-      data: data.Tboiler,
-    },
-  ]);
-
-  chart_Tset.updateSeries([
-    {
-      data: data.Tset,
-    },
-  ]);
-
-  chart_RelModLevel.updateSeries([
-    {
-      data: data.RelModLevel,
-    },
-  ]);
-
-  chart_Flame.updateSeries([
-    {
-      data: data.Flame,
-    },
-  ]);
-
-  chart_Tr.updateSeries([
-    {
-      data: data.Tr,
-    },
-  ]);
+  chart_Tboiler.updateSeries([{data: data.Tboiler,},]);
+  chart_Tset.updateSeries([{data: data.Tset,},]);
+  chart_RelModLevel.updateSeries([{data: data.RelModLevel,},]);
+  chart_Flame.updateSeries([{data: data.Flame,},]);
+  chart_Tr.updateSeries([{data: data.Tr,},]);
 }
 
 function reloadAndUpdate() {
   const dateFrom = Date.parse(document.querySelector("#date-from").value);
   const dateTo = Date.parse(document.querySelector("#date-to").value);
-
   const data = getData(new Date(dateFrom), new Date(dateTo));
   updateChart(data);
 }
@@ -137,10 +110,8 @@ function reloadAndUpdate() {
 function initUi(initOk) {
   document.querySelector("#waiting-indicator").style.setProperty("display", "none");
   document.querySelector("#chart-container").classList.remove("center");
-
   document.querySelector("#date-from").value = formatDate(new Date().addHours(-2), 'T');
   document.querySelector("#date-to").value = formatDate(new Date(), 'T');
-
   document.querySelector("#date-from").addEventListener("change", (event) => {
     reloadAndUpdate();
   });
@@ -174,21 +145,15 @@ function initUi(initOk) {
   });
   */
 
-  let options = {
+  let shared_options = {
     series: [
       {
         data: [],
       },
     ],
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 75,
-      group: "heating",
-      toolbar: {
-        autoSelected: "pan",
-        show: true,
-      },
+    theme: {
+      mode: 'dark',
+      palette: 'palette1',
     },
     animations: {
       enabled: false
@@ -206,11 +171,49 @@ function initUi(initOk) {
     markers: {
       size: 0,
     },
+    tooltip: {
+      enabled: true,
+      x: {
+          show: true,
+          format: 'HH:mm',
+          formatter: undefined,
+      },
+      y: {
+          formatter: undefined,
+          title: '',
+      },
+      marker: {
+          show: true,
+      },
+      fixed: {
+          enabled: true,
+          position: 'topLeft',
+          offsetX: 0,
+          offsetY: 0,
+      },
+    },
     xaxis: {
       type: "datetime",
       labels: {
         datetimeUTC: false,
       }
+    },
+  }
+
+  let options = {
+    chart: {
+      id: "chart",
+      type: "area",
+      height: 75,
+      group: "heating",
+      background: '#282828',
+      toolbar: {
+        autoSelected: "pan",
+        show: true,
+      },
+    },
+    grid: {
+      show: false,
     },
     yaxis: {
       show: false,
@@ -218,301 +221,107 @@ function initUi(initOk) {
         minWidth: 40,
       },
     },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    }
   };
-  chart_Flame = new ApexCharts(document.querySelector("#chart-Flame"), options);
+  chart_Flame = new ApexCharts(
+    document.querySelector("#chart-Flame"),
+    Object.assign({}, shared_options, options)
+  );
   chart_Flame.render();
 
   options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
     chart: {
       id: "chart",
       type: "area",
       height: 200,
       group: "heating",
+      background: '#282828',
       toolbar: {
         autoSelected: "pan",
         show: false,
       },
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      }
     },
     yaxis: {
       labels: {
         minWidth: 40,
       },
     },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    }
   };
-  chart_Tboiler = new ApexCharts(document.querySelector("#chart-Tboiler"), options);
+  chart_Tboiler = new ApexCharts(
+    document.querySelector("#chart-Tboiler"),
+    Object.assign({}, shared_options, options)
+  );
   chart_Tboiler.render();
 
   options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
     chart: {
       id: "chart",
       type: "area",
       height: 200,
       group: "heating",
+      background: '#282828',
       toolbar: {
         autoSelected: "pan",
         show: false,
       },
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      }
     },
     yaxis: {
       labels: {
         minWidth: 40,
       },
     },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    }
   };
-  chart_Tset = new ApexCharts(document.querySelector("#chart-Tset"), options);
+  chart_Tset = new ApexCharts(
+    document.querySelector("#chart-Tset"),
+    Object.assign({}, shared_options, options)
+  );
   chart_Tset.render();
 
   options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
     chart: {
       id: "chart",
       type: "area",
       height: 200,
       group: "heating",
+      background: '#282828',
       toolbar: {
         autoSelected: "pan",
         show: false,
       },
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      }
     },
     yaxis: {
       labels: {
         minWidth: 40,
       },
     },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    }
   };
-  chart_RelModLevel = new ApexCharts(document.querySelector("#chart-RelModLevel"), options);
+  chart_RelModLevel = new ApexCharts(
+    document.querySelector("#chart-RelModLevel"),
+    Object.assign({}, shared_options, options)
+  );
   chart_RelModLevel.render();
 
   options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
     chart: {
       id: "chart",
       type: "area",
       height: 200,
       group: "heating",
+      background: '#282828',
       toolbar: {
         autoSelected: "pan",
         show: false,
       },
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      }
     },
     yaxis: {
       labels: {
         minWidth: 40,
       },
     },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    }
   };
-  chart_Tr = new ApexCharts(document.querySelector("#chart-Tr"), options);
+  chart_Tr = new ApexCharts(
+    document.querySelector("#chart-Tr"),
+    Object.assign({}, shared_options, options)
+  );
   chart_Tr.render();
 
   reloadAndUpdate();
