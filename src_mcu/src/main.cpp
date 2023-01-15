@@ -156,7 +156,8 @@ void sendAlertEmail() {
 
 void notifyClients(const char *s) { ws.textAll(s); }
 
-void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
+void processRequest(unsigned long sOT_request,
+                    OpenThermResponseStatus sOT_status) {
   /* Some explanation:
   sOT: Instance linked to the 'slave' OpenTherm shield. It receives requests
        coming from the master thermostat and sends responses back to it.
@@ -167,7 +168,7 @@ void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
   OpenThermMessageID sOT_dataId = sOT.getDataID(sOT_request);
 
 #ifdef ALLOW_USER_FORCE_DISABLE_CH_DHW
-  // Potentially modify thermostat request
+  // Optionally modify thermostat request
   if (sOT_msgType == OpenThermMessageType::READ_DATA &&
       sOT_dataId == OpenThermMessageID::Status) {
 
@@ -192,7 +193,7 @@ void processRequest(unsigned long sOT_request, OpenThermResponseStatus status) {
   }
 #endif
 
-  // Send the intercepted (and potentially modified) thermostat request further
+  // Send the intercepted (and optionally modified) thermostat request further
   // downstream to the boiler and listen for the boiler's response.
   unsigned long mOT_response = mOT.sendRequest(sOT_request);
 
