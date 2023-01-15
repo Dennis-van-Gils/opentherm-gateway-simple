@@ -515,7 +515,7 @@ function transform_reading(dataId, dataValue) {
 
 function onMessage(event) {
   const msgData = event.data;
-  console.log(`onMessage ${msgData}`);
+  console.log(`${msgData}`);
 
   var date = new Date();
   var date_str = formatTime(date);
@@ -542,6 +542,7 @@ function onMessage(event) {
     document.getElementById("lbl_MaxTSet").innerText = msgData.slice(2);
   } else if (msgKind == "!!") {
     text.value = log + date_str + ` !! RESET TRIGGERED\r\n`;
+  } else if (msgKind == "FH") {
   } else {
     const numberData = msgData.slice(1);
     const int = parseInt(Number(`0x${numberData}`), 10);

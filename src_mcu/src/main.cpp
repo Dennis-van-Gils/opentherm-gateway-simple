@@ -108,7 +108,7 @@ bool  _dhw_disable = false;
 
 // Watchdog timer
 const unsigned long WDT_TIMEOUT = 30000;     // Timeout [ms]
-const unsigned long WDT_RESET_PERIOD = 1000; // Slow down reset on purpose [ms]
+const unsigned long WDT_RESET_PERIOD = 5000; // Slow down reset on purpose [ms]
 unsigned long t_WDT_reset = millis();        // Time of last watchdog reset
 
 // Boiler communication check
@@ -418,14 +418,17 @@ void setup() {
   server.addHandler(&ws);
   server.begin();
 
+  // Email notification
   MailClient.networkReconnect(true);
   smtp.debug(0);
 
-  // Enable OTA updates
+  // Over-the-air updates
   AsyncElegantOTA.begin(&server);
 
+  // ThingSpeak
   ThingSpeak.begin(client);
 
+  // OpenTherm shields
   mOT.begin(mHandleInterrupt);
   sOT.begin(sHandleInterrupt, processRequest);
 
@@ -451,6 +454,10 @@ void loop() {
   if (now - t_WDT_reset > WDT_RESET_PERIOD) {
     t_WDT_reset = now;
     esp_task_wdt_reset();
+
+    // DEBUG info
+    snprintf(char_buffer, CHAR_BUFFER_LEN, "FH          %u", ESP.getFreeHeap());
+    notifyClients(char_buffer);
   }
 #endif
 
