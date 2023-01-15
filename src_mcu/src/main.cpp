@@ -301,11 +301,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
   }
 }
 
-void initWebSocket() {
-  ws.onEvent(onEvent);
-  server.addHandler(&ws);
-}
-
 void notFound(AsyncWebServerRequest *request) {
   snprintf(char_buffer, CHAR_BUFFER_LEN, "%s", "Not found, ");
   // Will truncate an excessively long url
@@ -418,22 +413,21 @@ void setup() {
     trigger_reset = true;
   });
 
+  server.onNotFound(notFound);
+  ws.onEvent(onEvent); // Init websocket
+  server.addHandler(&ws);
+  server.begin();
+
+  MailClient.networkReconnect(true);
+  smtp.debug(0);
+
   // Enable OTA updates
   AsyncElegantOTA.begin(&server);
 
-  server.onNotFound(notFound);
-  server.begin();
-
   ThingSpeak.begin(client);
-
-  initWebSocket();
 
   mOT.begin(mHandleInterrupt);
   sOT.begin(sHandleInterrupt, processRequest);
-
-  // Set the network reconnection option
-  MailClient.networkReconnect(true);
-  smtp.debug(0);
 
 #ifdef ESP32
   // Watchdog timer
