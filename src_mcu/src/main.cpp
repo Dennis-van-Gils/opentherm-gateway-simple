@@ -446,6 +446,9 @@ void setup() {
   loop
 ------------------------------------------------------------------------------*/
 
+bool waiting_for_ESP_restart = false;
+unsigned long ESP_restart_timer = 0;
+
 void loop() {
   unsigned long now = millis();
 
@@ -457,21 +460,30 @@ void loop() {
   }
 #endif
 
-  // Boiler communication check
-  if (now - t_WRITE_ACK > WRITE_ACK_TIMEOUT) {
-    trigger_reset = true;
-  }
-  if (trigger_reset) {
-    snprintf(char_buffer, CHAR_BUFFER_LEN, "!! RESET TRIGGERED, %u",
-             now - t_WRITE_ACK);
-    notifyClients(char_buffer);
-    sendAlertEmail();
+  if (waiting_for_ESP_restart) {
+    // Wait a long time before restarting; prevents fast-cycling restarts.
+    // While we wait, still execute `loop()` to allow any websocket and
+    // OpenTherm communication.
+    if (now - ESP_restart_timer > WDT_TIMEOUT) {
+      ESP.restart();
+    }
+  } else {
+    // Boiler communication check
+    if (now - t_WRITE_ACK > WRITE_ACK_TIMEOUT) {
+      trigger_reset = true;
+    }
+    if (trigger_reset) {
+      snprintf(char_buffer, CHAR_BUFFER_LEN, "!! RESET TRIGGERED, %u",
+               now - t_WRITE_ACK);
+      notifyClients(char_buffer);
+      sendAlertEmail();
 #ifdef ESP32
-    delay(WDT_TIMEOUT); // Wait a long time; prevents fast-cycling resets
-    ESP.restart();
+      waiting_for_ESP_restart = true;
+      ESP_restart_timer = now;
 #else
-    delay(WDT_TIMEOUT); // Trigger the watchdog timer
+      delay(WDT_TIMEOUT); // Trigger the watchdog timer
 #endif
+    }
   }
 
   sOT.process();

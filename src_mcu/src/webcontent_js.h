@@ -708,6 +708,11 @@ function onMessage(event) {
   const msgData = event.data;
   console.log(`onMessage ${msgData}`);
 
+  var text = document.getElementById("commands-log");
+  var date = new Date();
+  var log = text.value;
+  log = log.substring(log.length - 500000);
+
   const msgKind = msgData.slice(0, 2);
   if (msgKind == "A:") {
     document.getElementById("lbl_TSet").innerText = msgData.slice(2);
@@ -724,12 +729,9 @@ function onMessage(event) {
   } else if (msgKind == "G:") {
     document.getElementById("lbl_MaxTSet").innerText = msgData.slice(2);
   } else if (msgKind == "!!") {
+    text.value = log + formatTime(date) + ` !! RESET TRIGGERED\r\n`;
   } else {
     const numberData = msgData.slice(1);
-
-    var text = document.getElementById("commands-log");
-    var date = new Date();
-
     const int = parseInt(Number(`0x${numberData}`), 10);
     const data = int & (~(1<<31));
     const msgType = data >> 28;
@@ -752,9 +754,6 @@ function onMessage(event) {
 
     const msgTypeStr = OpenThermMessageType[msgType];
     const dataIdStr = OpenThermMessageID[dataId];
-
-    var log = text.value;
-    log = log.substring(log.length - 500000);
     text.value = log +
       formatTime(date) + ` ` +
       // pad(`0`.repeat(10), int, true) + ` ` +
@@ -763,8 +762,8 @@ function onMessage(event) {
       pad(` `.repeat(22), dataIdStr, false) + ` | ` +
         transform_reading(dataId, dataValue) +
         `\r\n`;
-    text.scrollTop = text.scrollHeight;
   }
+  text.scrollTop = text.scrollHeight;
 }
 
 window.addEventListener("load", onLoad);
