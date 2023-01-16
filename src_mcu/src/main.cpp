@@ -488,7 +488,7 @@ void loop() {
   }
 
   sOT.process();
-  ws.cleanupClients();
+  // ws.cleanupClients(); // DEBUG: Investigating ESP32 hang
 
   if (_TSet_notify) {
     _TSet_notify = false;
@@ -550,4 +550,6 @@ void loop() {
     }
 #endif
   }
+
+  delay(10); // DEBUG: Investigating ESP32 hang
 }
