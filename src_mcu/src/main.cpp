@@ -223,7 +223,15 @@ void processRequest(unsigned long sOT_request,
 
   // Update the variables that you want logged
   // -----------------------------------------
-  if (mOT.isValidResponse(mOT_response)) {
+  if ((mOT_response == OpenThermMessageType::READ_ACK) ||
+      (mOT_response == OpenThermMessageType::WRITE_ACK) ||
+      (mOT_response == OpenThermMessageType::DATA_INVALID)) {
+    // NOTE: We also accept DATA_INVALID, because e.g.
+    //   request : WRITE_DATA   | 57 | MaxTSet | 90.00
+    //   response: DATA_INVALID | 57 | MaxTSet | 75.00
+    // Meaning the thermostat requested a max boiler setpoint of 90'C,
+    // but was only rewarded 75'C by the boiler (hard-limited).
+
     // 0: Status
     if (sOT_dataId == OpenThermMessageID::Status) {
       _IsFlameOn = mOT.isFlameOn(mOT_response);
