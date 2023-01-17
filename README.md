@@ -16,3 +16,5 @@ Forked from https://github.com/diyless/opentherm-gateway-simple and modified as 
 * `Code` Added precompiler flag to disable the `disable CH` and `disable DHW` manual overrides
 * `Code` Added explanatory comments
 * `Fix` Report correct `Flame` status
+
+![screenshot](./images/screenshot.png)
