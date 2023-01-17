@@ -517,7 +517,7 @@ void loop() {
   }
 
   sOT.process();
-  // ws.cleanupClients(); // DEBUG: Investigating ESP32 hang
+  // ws.cleanupClients(); // DEBUG: Commented out to investigate ESP32 hang
 
   if (_TSet_notify) {
     _TSet_notify = false;
@@ -580,5 +580,5 @@ void loop() {
 #endif
   }
 
-  delay(10); // DEBUG: Investigating ESP32 hang
+  delay(10); // Necessary idle time to allow the ESP task manager to run
 }
