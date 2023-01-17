@@ -192,7 +192,7 @@ void processRequest(unsigned long sOT_request,
   }
 #endif
 
-  // WORK IN PROGRESS
+  // Specific to my boiler Remeha Avanta 28c
   //
   // UNKNOWN_DATA_ID, READ_DATA
   //   ID18: CHPressure   seldom
@@ -201,17 +201,6 @@ void processRequest(unsigned long sOT_request,
   //   ID29: Tstorage     seldom
   //   ID35: ?            seldom
   //   ID36: ?            seldom
-
-  // We'll intercept ID27 and insert our own request to try to override the room
-  // temperature setpoint using ID9 `TrOverride`
-  /*
-  if ((sOT_msgType == OpenThermMessageType::READ_DATA) &&
-      (sOT_dataId == OpenThermMessageID::Toutside)) {
-    sOT_request = sOT.buildRequest(OpenThermMessageType::WRITE_DATA,
-                                   OpenThermMessageID::TrOverride,
-                                   sOT.temperatureToData(24));
-  }
-  */
 
   // Send the intercepted (and optionally modified) thermostat request further
   // downstream to the boiler and listen for the boiler's response.
