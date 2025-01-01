@@ -43,7 +43,7 @@ DEV NOTE: Use `unsigned long` instead of `uint32_t`.
 
 // Print debug info over Serial?
 // Comment out to disable
-// #define DEBUG
+#define DEBUG
 
 // Common character array, used by many functions.
 const uint16_t CHAR_BUFFER_LEN = 64;
@@ -79,8 +79,8 @@ WiFiClient client;
 
 OpenTherm mOT(mInPin, mOutPin);
 OpenTherm sOT(sInPin, sOutPin, true);
-void ICACHE_RAM_ATTR mHandleInterrupt() { mOT.handleInterrupt(); }
-void ICACHE_RAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
+void IRAM_ATTR mHandleInterrupt() { mOT.handleInterrupt(); }
+void IRAM_ATTR sHandleInterrupt() { sOT.handleInterrupt(); }
 
 // clang-format off
 int _thingSpeakUpd = 0;
