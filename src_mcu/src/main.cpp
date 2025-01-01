@@ -347,6 +347,9 @@ String htmlVarProcessor(const String &var) {
 ------------------------------------------------------------------------------*/
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+
 #ifdef DEBUG
   Serial.begin(9600);
   Serial.println("WiFi...");
@@ -455,6 +458,9 @@ void setup() {
   esp_task_wdt_init(WDT_TIMEOUT, true);
   esp_task_wdt_add(NULL);
 #endif
+
+  delay(3000);
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 /*------------------------------------------------------------------------------
@@ -466,6 +472,7 @@ unsigned long ESP_restart_timer = 0;
 
 void loop() {
   unsigned long now = millis();
+  static unsigned long still_alive_blinker_tick = now;
 
 #ifdef ESP32
   // Watchdog timer
@@ -567,6 +574,15 @@ void loop() {
       Serial.println(x);
     }
 #endif
+  }
+
+  if (now - still_alive_blinker_tick >= 900) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
+
+  if (now - still_alive_blinker_tick >= 1000) {
+    still_alive_blinker_tick = now;
+    digitalWrite(LED_BUILTIN, LOW);
   }
 
   delay(10); // Necessary idle time to allow the ESP task manager to run
