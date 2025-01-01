@@ -12,9 +12,6 @@ DEV NOTE: Use `unsigned long` instead of `uint32_t`.
 #  include "AsyncTCP.h"
 #  include <WiFi.h>
 #  include <esp_task_wdt.h>
-#elif defined(ESP8266)
-#  include "ESPAsyncTCP.h"
-#  include <ESP8266WiFi.h>
 #endif
 #include "ESPAsyncWebServer.h"
 #include "ESP_Mail_Client.h"
@@ -33,9 +30,6 @@ DEV NOTE: Use `unsigned long` instead of `uint32_t`.
 #else
 #  include "wifi_settings_template.h"
 #endif
-
-// Enable OTA updates
-#include "AsyncElegantOTA.h"
 
 // Allow the user to force-disable the CH and DHW modes via the web interface?
 // Comment out to disable
@@ -233,9 +227,9 @@ void processRequest(unsigned long sOT_request,
 
   // Update the variables that you want logged
   // -----------------------------------------
-  if ((mOT_response == OpenThermMessageType::READ_ACK) ||
-      (mOT_response == OpenThermMessageType::WRITE_ACK) ||
-      (mOT_response == OpenThermMessageType::DATA_INVALID)) {
+  if ((mOT_response == int(OpenThermMessageType::READ_ACK)) ||
+      (mOT_response == int(OpenThermMessageType::WRITE_ACK)) ||
+      (mOT_response == int(OpenThermMessageType::DATA_INVALID))) {
     // NOTE: We also accept DATA_INVALID, because e.g.
     //   request : WRITE_DATA   | 57 | MaxTSet | 90.00
     //   response: DATA_INVALID | 57 | MaxTSet | 75.00
@@ -330,6 +324,11 @@ void notFound(AsyncWebServerRequest *request) {
 }
 
 String htmlVarProcessor(const String &var) {
+#ifdef DEBUG
+  Serial.print("Token received for htmlVarProcessor: ");
+  Serial.println(var);
+#endif
+
   if (var == "IP_ADDR")
     return WiFi.localIP().toString();
 
@@ -443,9 +442,6 @@ void setup() {
   MailClient.networkReconnect(true);
   smtp.debug(0);
 
-  // Over-the-air updates
-  AsyncElegantOTA.begin(&server);
-
   // ThingSpeak
   ThingSpeak.begin(client);
 
@@ -513,7 +509,7 @@ void loop() {
   }
 
   sOT.process();
-  // ws.cleanupClients(); // DEBUG: Commented out to investigate ESP32 hang
+  ws.cleanupClients();
 
   if (_TSet_notify) {
     _TSet_notify = false;
@@ -568,9 +564,9 @@ void loop() {
     int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
 #ifdef DEBUG
     if (x == 200) {
-      Serial.println("Channel update successful.");
+      Serial.println("ThingSpeak channel update successful.");
     } else {
-      Serial.print("Problem updating channel. HTTP error code ");
+      Serial.print("Problem updating ThingSpeak channel. HTTP error code: ");
       Serial.println(x);
     }
 #endif
