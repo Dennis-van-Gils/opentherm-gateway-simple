@@ -15,6 +15,7 @@
 #include "ESPAsyncWebServer.h"
 #include "ESP_Mail_Client.h"
 #include "OpenTherm.h"
+#include "PubSubClient.h"
 #include "ThingSpeak.h"
 
 #include "webcontent_css.h"
@@ -44,7 +45,8 @@ extern const byte favicon_ico[];
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-WiFiClient client;
+WiFiClient wifi_client;
+PubSubClient mqtt_client(MQTT_BROKER, MQTT_PORT, wifi_client);
 
 // OpenTherm shields
 const int PIN_MASTER_IN = 21;  // 2: Arduino,  4: ESP8266 (D2), 21: ESP32
@@ -79,6 +81,26 @@ float _TrSet = 0.;
 float _RelModLevel = 0.;
 float _Tr = 0.;
 float _Tboiler = 0.;
+
+/*------------------------------------------------------------------------------
+  mqtt_reconnect
+------------------------------------------------------------------------------*/
+
+void mqtt_reconnect() {
+#if DEBUG
+  Serial.print("Connecting to MQTT broker: ");
+#endif
+
+  if (!mqtt_client.connect("OpenTherm", MQTT_USERNAME, MQTT_PASSWORD)) {
+#if DEBUG
+    Serial.println("FAILED!");
+#endif
+  } else {
+#if DEBUG
+    Serial.println("Succes.");
+#endif
+  }
+}
 
 /*------------------------------------------------------------------------------
   formattedTextFloat
@@ -228,6 +250,9 @@ void processRequest(unsigned long sOT_request,
     case OpenThermMessageID::Status:
       // 0: Status
       _IsFlameOn = mOT.isFlameOn(mOT_response);
+
+      dtostrf(_IsFlameOn, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/IsFlameOn", buf);
       break;
 
     case OpenThermMessageID::TSet:
@@ -235,6 +260,9 @@ void processRequest(unsigned long sOT_request,
       _TSet = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "A:", _TSet);
       sendToWebClients(buf);
+
+      dtostrf(_TSet, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/TSet", buf);
       break;
 
     case OpenThermMessageID::TrSet:
@@ -242,11 +270,17 @@ void processRequest(unsigned long sOT_request,
       _TrSet = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "E:", _TrSet);
       sendToWebClients(buf);
+
+      dtostrf(_TrSet, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/TrSet", buf);
       break;
 
     case OpenThermMessageID::RelModLevel:
       // 17: Relative Modulation Level (%)
       _RelModLevel = mOT.getFloat(mOT_response);
+
+      dtostrf(_RelModLevel, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/RelModLevel", buf);
       break;
 
     case OpenThermMessageID::Tr:
@@ -254,6 +288,9 @@ void processRequest(unsigned long sOT_request,
       _Tr = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "F:", _Tr);
       sendToWebClients(buf);
+
+      dtostrf(_Tr, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/Tr", buf);
       break;
 
     case OpenThermMessageID::Tboiler:
@@ -261,6 +298,9 @@ void processRequest(unsigned long sOT_request,
       _Tboiler = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "B:", _Tboiler);
       sendToWebClients(buf);
+
+      dtostrf(_Tboiler, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/Tboiler", buf);
       break;
 
     case OpenThermMessageID::Tdhw:
@@ -268,6 +308,9 @@ void processRequest(unsigned long sOT_request,
       value = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "D:", value);
       sendToWebClients(buf);
+
+      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/Tdhw", buf);
       break;
 
     case OpenThermMessageID::TdhwSet:
@@ -275,6 +318,9 @@ void processRequest(unsigned long sOT_request,
       value = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "C:", value);
       sendToWebClients(buf);
+
+      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/TdhwSet", buf);
       break;
 
     case OpenThermMessageID::MaxTSet:
@@ -282,6 +328,9 @@ void processRequest(unsigned long sOT_request,
       value = mOT.getFloat(mOT_response);
       formattedTextFloat(buf, BUF_LEN, "G:", value);
       sendToWebClients(buf);
+
+      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      mqtt_client.publish("OpenTherm/MaxTSet", buf);
       break;
     }
   }
@@ -363,6 +412,7 @@ void setup() {
   Serial.print("\nObtaining IP address: ");
 #endif
 
+  // WiFi
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -375,6 +425,9 @@ void setup() {
 #if DEBUG
   Serial.println(WiFi.localIP());
 #endif
+
+  // MQTT
+  mqtt_reconnect();
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", index_html, htmlVarProcessor);
@@ -418,7 +471,7 @@ void setup() {
   smtp.debug(0);
 
   // ThingSpeak
-  ThingSpeak.begin(client);
+  ThingSpeak.begin(wifi_client);
 
   // OpenTherm shields
   mOT.begin(mHandleInterrupt);
@@ -481,6 +534,12 @@ void loop() {
   sOT.process();
   ws.cleanupClients();
 
+  // MQTT
+  if (!mqtt_client.connected()) {
+    mqtt_reconnect();
+  }
+  mqtt_client.loop();
+
   // ThingSpeak
   if (tick_ThingSpeak_update < millis()) {
     tick_ThingSpeak_update = millis() + 20000;
@@ -505,7 +564,7 @@ void loop() {
         ThingSpeak.writeFields(THINGSPEAK_CHANNEL, THINGSPEAK_WRITE_API_KEY);
 #if DEBUG
     if (ans == 200) {
-      Serial.println("ThingSpeak channel update successful.");
+      Serial.println("ThingSpeak channel update: Succes.");
     } else {
       Serial.print("Problem updating ThingSpeak channel. HTTP error code: ");
       Serial.println(ans);
