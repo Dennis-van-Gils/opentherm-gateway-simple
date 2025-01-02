@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-  // clang-format off
+// clang-format off
   const char index_html[] PROGMEM = R"rawliteral(
   <script type="text/javascript">
     var ipAddr = "`IP_ADDR`";
@@ -35,16 +35,6 @@
           </td>
         </tr>
         <tr>
-          <td class="label-column">Setpoint, &#x00B0;C</td>
-          <td style="width: auto">
-            <div id="lbl_TrSet">--</div>
-          </td>
-          <td class="label-column">Setpoint, &#x00B0;C</td>
-          <td style="width: auto">
-            <div id="lbl_TdhwSet">--</div>
-          </td>
-        </tr>
-        <tr>
           <td class="label-column">Temperature, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_Tr">--</div>
@@ -52,6 +42,16 @@
           <td class="label-column">Temperature, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_Tdhw">--</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_TrSet">--</div>
+          </td>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_TdhwSet">--</div>
           </td>
         </tr>
         <tr>
@@ -63,9 +63,9 @@
           </td>
         </tr>
         <tr>
-          <td class="label-column">Setpoint, &#x00B0;C</td>
+          <td class="label-column">Boiler temperature, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="lbl_TSet">--</div>
+            <div id="lbl_Tboiler">--</div>
           </td>
           <td class="label-column">Service</td>
           <td style="width: auto">
@@ -76,14 +76,27 @@
           </td>
         </tr>
         <tr>
-          <td class="label-column">Boiler temperature, &#x00B0;C</td>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="lbl_Tboiler">--</div>
+            <div id="lbl_TSet">--</div>
           </td>
           <td class="label-column">Fault</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_Fault" disabled />
+              <span class="slider round"></span>
+            </label>
+          </td>
+        </tr>
+        <tr>
+          <td class="label-column">Max setpoint, &#x00B0;C</td>
+          <td style="width: auto">
+            <div id="lbl_MaxTSet">--</div>
+          </td>
+          <td class="label-column">CH mode</td>
+          <td style="width: auto">
+            <label class="switch">
+              <input type="checkbox" id="LED_CHmode" disabled />
               <span class="slider round"></span>
             </label>
           </td>
@@ -95,19 +108,6 @@
               <input type="checkbox" id="heatingEnableInput" disabled />
               <span class="slider round"></span>
             </label>
-          </td>
-          <td class="label-column">CH mode</td>
-          <td style="width: auto">
-            <label class="switch">
-              <input type="checkbox" id="LED_CHmode" disabled />
-              <span class="slider round"></span>
-            </label>
-          </td>
-        </tr>
-        <tr>
-          <td class="label-column">Max setpoint, &#x00B0;C</td>
-          <td style="width: auto">
-            <div id="lbl_MaxTSet">--</div>
           </td>
           <td class="label-column">DHW mode</td>
           <td style="width: auto">
