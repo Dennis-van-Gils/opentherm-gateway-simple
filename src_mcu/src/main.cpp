@@ -2,7 +2,7 @@
  * @file    main.cpp
  * @author  Dennis van Gils (vangils.dennis@gmail.com)
  * @version https://github.com/Dennis-van-Gils/opentherm-gateway-simple
- * @date    02-01-2025
+ * @date    03-01-2025
  *
  * @copyright MIT License. See the LICENSE file for details.
  */
@@ -14,7 +14,7 @@
 
 #include "ESPAsyncWebServer.h"
 #include "ESP_Mail_Client.h"
-#include "ElegantOTA.h"
+#include "ElegantOTA.h" // Serves a firmware update webpage at http://.../update
 #include "OpenTherm.h"
 #include "ThingSpeak.h"
 
