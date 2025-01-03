@@ -104,7 +104,7 @@ void mqtt_reconnect() {
 }
 
 /*------------------------------------------------------------------------------
-  formattedTextFloat
+  Text formatters
 ------------------------------------------------------------------------------*/
 
 /**
@@ -120,6 +120,22 @@ void formattedTextFloat(char *buf, uint16_t buf_len, const char *text,
 
   dtostrf(value, -(FLOAT_BUF_LEN - 1), 2, float_buf);
   snprintf(buf, buf_len, "%s%s", text, float_buf);
+}
+
+/**
+ * Left-aligned float number `value` using two digits of precision.
+ * Output looks like "12.34".
+ */
+void formattedFloat(char *buf, uint16_t buf_len, float value) {
+  dtostrf(value, -(buf_len - 1), 2, buf);
+}
+
+/**
+ * Left-aligned boolean `value`.
+ * Output looks like "0" or "1".
+ */
+void formattedBool(char *buf, uint16_t buf_len, bool value) {
+  dtostrf(value, -1, 0, buf);
 }
 
 /*------------------------------------------------------------------------------
@@ -252,8 +268,16 @@ void processRequest(unsigned long sOT_request,
       // 0: Status
       _IsFlameOn = mOT.isFlameOn(mOT_response);
 
-      dtostrf(_IsFlameOn, -(BUF_LEN - 1), 2, buf);
+      formattedBool(buf, BUF_LEN, mOT.isFault(mOT_response));
+      mqtt_client.publish("OpenTherm/IsFault", buf);
+      formattedBool(buf, BUF_LEN, mOT.isCentralHeatingActive(mOT_response));
+      mqtt_client.publish("OpenTherm/IsCentralHeatingActive", buf);
+      formattedBool(buf, BUF_LEN, mOT.isHotWaterActive(mOT_response));
+      mqtt_client.publish("OpenTherm/IsHotWaterActive", buf);
+      formattedBool(buf, BUF_LEN, _IsFlameOn);
       mqtt_client.publish("OpenTherm/IsFlameOn", buf);
+      formattedBool(buf, BUF_LEN, mOT.isDiagnostic(mOT_response));
+      mqtt_client.publish("OpenTherm/IsDiagnostic", buf);
       break;
 
     case OpenThermMessageID::TSet:
@@ -262,7 +286,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "A:", _TSet);
       sendToWebClients(buf);
 
-      dtostrf(_TSet, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, _TSet);
       mqtt_client.publish("OpenTherm/TSet", buf);
       break;
 
@@ -272,7 +296,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "E:", _TrSet);
       sendToWebClients(buf);
 
-      dtostrf(_TrSet, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, _TrSet);
       mqtt_client.publish("OpenTherm/TrSet", buf);
       break;
 
@@ -280,7 +304,7 @@ void processRequest(unsigned long sOT_request,
       // 17: Relative Modulation Level (%)
       _RelModLevel = mOT.getFloat(mOT_response);
 
-      dtostrf(_RelModLevel, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, _RelModLevel);
       mqtt_client.publish("OpenTherm/RelModLevel", buf);
       break;
 
@@ -290,7 +314,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "F:", _Tr);
       sendToWebClients(buf);
 
-      dtostrf(_Tr, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, _Tr);
       mqtt_client.publish("OpenTherm/Tr", buf);
       break;
 
@@ -300,7 +324,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "B:", _Tboiler);
       sendToWebClients(buf);
 
-      dtostrf(_Tboiler, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, _Tboiler);
       mqtt_client.publish("OpenTherm/Tboiler", buf);
       break;
 
@@ -310,7 +334,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "D:", value);
       sendToWebClients(buf);
 
-      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, value);
       mqtt_client.publish("OpenTherm/Tdhw", buf);
       break;
 
@@ -320,7 +344,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "C:", value);
       sendToWebClients(buf);
 
-      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, value);
       mqtt_client.publish("OpenTherm/TdhwSet", buf);
       break;
 
@@ -330,7 +354,7 @@ void processRequest(unsigned long sOT_request,
       formattedTextFloat(buf, BUF_LEN, "G:", value);
       sendToWebClients(buf);
 
-      dtostrf(value, -(BUF_LEN - 1), 2, buf);
+      formattedFloat(buf, BUF_LEN, value);
       mqtt_client.publish("OpenTherm/MaxTSet", buf);
       break;
     }
@@ -544,6 +568,7 @@ void loop() {
     mqtt_reconnect();
   }
   mqtt_client.loop();
+
   // Over-the-air updates
   ElegantOTA.loop();
 
