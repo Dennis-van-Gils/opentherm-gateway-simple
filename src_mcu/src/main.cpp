@@ -14,6 +14,7 @@
 
 #include "ESPAsyncWebServer.h"
 #include "ESP_Mail_Client.h"
+#include "ElegantOTA.h"
 #include "OpenTherm.h"
 #include "ThingSpeak.h"
 
@@ -408,6 +409,10 @@ void setup() {
     trigger_reset = true;
   });
 
+  // Over-the-air updates
+  ElegantOTA.begin(&server);
+
+  // Webpage
   ws.onEvent(onEvent);
   server.addHandler(&ws);
   server.onNotFound(notFound);
@@ -480,6 +485,9 @@ void loop() {
 
   sOT.process();
   ws.cleanupClients();
+
+  // Over-the-air updates
+  ElegantOTA.loop();
 
   // ThingSpeak
   if (tick_ThingSpeak_update < millis()) {
