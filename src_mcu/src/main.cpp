@@ -2,7 +2,7 @@
  * @file    main.cpp
  * @author  Dennis van Gils (vangils.dennis@gmail.com)
  * @version https://github.com/Dennis-van-Gils/opentherm-gateway-simple
- * @date    02-01-2025
+ * @date    03-01-2025
  *
  * @copyright MIT License. See the LICENSE file for details.
  */
@@ -14,6 +14,7 @@
 
 #include "ESPAsyncWebServer.h"
 #include "ESP_Mail_Client.h"
+#include "ElegantOTA.h" // Serves a firmware update webpage at http://.../update
 #include "OpenTherm.h"
 #include "PubSubClient.h"
 #include "ThingSpeak.h"
@@ -461,6 +462,10 @@ void setup() {
     trigger_reset = true;
   });
 
+  // Over-the-air updates
+  ElegantOTA.begin(&server);
+
+  // Webpage
   ws.onEvent(onEvent);
   server.addHandler(&ws);
   server.onNotFound(notFound);
@@ -539,6 +544,8 @@ void loop() {
     mqtt_reconnect();
   }
   mqtt_client.loop();
+  // Over-the-air updates
+  ElegantOTA.loop();
 
   // ThingSpeak
   if (tick_ThingSpeak_update < millis()) {

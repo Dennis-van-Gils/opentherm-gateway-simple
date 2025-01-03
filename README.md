@@ -6,7 +6,7 @@ Forked from https://github.com/diyless/opentherm-gateway-simple and modified as 
 
 * Project file structure changed from `Arduino IDE` to `PlatformIO / VSCode IDE`
 * `Support` Removed support for ESP8266. Supports only ESP32.
-* ~~`Functionality` Enabled over-the-air (OTA) firmware updates via `http://.../update`~~
+* `Functionality` Enabled over-the-air (OTA) firmware updates via `http://.../update`
 * `Functionality` Added a boiler communication timeout check. It will email an alert and reset the ESP.
 * `Interface` Neater log using human-readable values
 * `Interface` Added more read-outs to the webpage and ThingSpeak
