@@ -2,7 +2,7 @@
  * @file    main.cpp
  * @author  Dennis van Gils (vangils.dennis@gmail.com)
  * @version https://github.com/Dennis-van-Gils/opentherm-gateway-simple
- * @date    03-01-2025
+ * @date    04-01-2025
  *
  * @copyright MIT License. See the LICENSE file for details.
  */
@@ -17,7 +17,6 @@
 #include "ElegantOTA.h" // Serves a firmware update webpage at http://.../update
 #include "OpenTherm.h"
 #include "PubSubClient.h"
-#include "ThingSpeak.h"
 
 #include "webcontent_css.h"
 #include "webcontent_favicon.h"
@@ -75,14 +74,6 @@ uint32_t tick_WRITE_ACK = millis();       // Time of last WRITE_ACK
 bool trigger_reset = false;               // When true will reset the MCU
 SMTPSession smtp;                         // To allow sending email
 
-// ThingSpeak values to track
-bool _IsFlameOn = false;
-float _TSet = 0.;
-float _TrSet = 0.;
-float _RelModLevel = 0.;
-float _Tr = 0.;
-float _Tboiler = 0.;
-
 /*------------------------------------------------------------------------------
   mqtt_reconnect
 ------------------------------------------------------------------------------*/
@@ -106,21 +97,6 @@ void mqtt_reconnect() {
 /*------------------------------------------------------------------------------
   Text formatters
 ------------------------------------------------------------------------------*/
-
-/**
- * @brief Adjust the passed character array `buf` of maximum length `buf_len` to
- * contain a string starting with passed character array `text` and appended
- * with a left-aligned float number `value` using two digits of precision.
- * Output looks like "text12.34".
- */
-void formattedTextFloat(char *buf, uint16_t buf_len, const char *text,
-                        float value) {
-  const uint8_t FLOAT_BUF_LEN = 10;
-  char float_buf[FLOAT_BUF_LEN] = {'\0'};
-
-  dtostrf(value, -(FLOAT_BUF_LEN - 1), 2, float_buf);
-  snprintf(buf, buf_len, "%s%s", text, float_buf);
-}
 
 /**
  * Left-aligned float number `value` using two digits of precision.
@@ -249,8 +225,6 @@ void processRequest(unsigned long sOT_request,
   sendToWebClients(buf);
 
   // Take action on the boiler's response
-  float value;
-
   if ((mOT_msg_type == OpenThermMessageType::READ_ACK) ||
       (mOT_msg_type == OpenThermMessageType::WRITE_ACK) ||
       (mOT_msg_type == OpenThermMessageType::DATA_INVALID)) {
@@ -266,15 +240,13 @@ void processRequest(unsigned long sOT_request,
 
     case OpenThermMessageID::Status:
       // 0: Status
-      _IsFlameOn = mOT.isFlameOn(mOT_response);
-
       formattedBool(buf, BUF_LEN, mOT.isFault(mOT_response));
       mqtt_client.publish("OpenTherm/IsFault", buf);
       formattedBool(buf, BUF_LEN, mOT.isCentralHeatingActive(mOT_response));
       mqtt_client.publish("OpenTherm/IsCentralHeatingActive", buf);
       formattedBool(buf, BUF_LEN, mOT.isHotWaterActive(mOT_response));
       mqtt_client.publish("OpenTherm/IsHotWaterActive", buf);
-      formattedBool(buf, BUF_LEN, _IsFlameOn);
+      formattedBool(buf, BUF_LEN, mOT.isFlameOn(mOT_response));
       mqtt_client.publish("OpenTherm/IsFlameOn", buf);
       formattedBool(buf, BUF_LEN, mOT.isDiagnostic(mOT_response));
       mqtt_client.publish("OpenTherm/IsDiagnostic", buf);
@@ -282,79 +254,49 @@ void processRequest(unsigned long sOT_request,
 
     case OpenThermMessageID::TSet:
       // 1: Control setpoint i.e. CH water temperature setpoint (°C)
-      _TSet = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "A:", _TSet);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, _TSet);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/TSet", buf);
       break;
 
     case OpenThermMessageID::TrSet:
       // 16: Room Setpoint (°C)
-      _TrSet = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "E:", _TrSet);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, _TrSet);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/TrSet", buf);
       break;
 
     case OpenThermMessageID::RelModLevel:
       // 17: Relative Modulation Level (%)
-      _RelModLevel = mOT.getFloat(mOT_response);
-
-      formattedFloat(buf, BUF_LEN, _RelModLevel);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/RelModLevel", buf);
       break;
 
     case OpenThermMessageID::Tr:
       // 24: Room temperature (°C)
-      _Tr = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "F:", _Tr);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, _Tr);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/Tr", buf);
       break;
 
     case OpenThermMessageID::Tboiler:
       // 25: Boiler flow water temperature (°C)
-      _Tboiler = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "B:", _Tboiler);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, _Tboiler);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/Tboiler", buf);
       break;
 
     case OpenThermMessageID::Tdhw:
       // 26: DHW temperature (°C)
-      value = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "D:", value);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, value);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/Tdhw", buf);
       break;
 
     case OpenThermMessageID::TdhwSet:
       // 56: DHW setpoint (°C)
-      value = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "C:", value);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, value);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/TdhwSet", buf);
       break;
 
     case OpenThermMessageID::MaxTSet:
       // 57: Max CH water setpoint (°C)
-      value = mOT.getFloat(mOT_response);
-      formattedTextFloat(buf, BUF_LEN, "G:", value);
-      sendToWebClients(buf);
-
-      formattedFloat(buf, BUF_LEN, value);
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/MaxTSet", buf);
       break;
     }
@@ -414,12 +356,6 @@ String htmlVarProcessor(const String &var) {
 
   if (var == "IP_ADDR")
     return WiFi.localIP().toString();
-
-  if (var == "READ_TOKEN")
-    return THINGSPEAK_READ_API_KEY;
-
-  if (var == "CHANNEL_ID")
-    return String(THINGSPEAK_CHANNEL);
 
   return String();
 }
@@ -499,9 +435,6 @@ void setup() {
   MailClient.networkReconnect(true);
   smtp.debug(0);
 
-  // ThingSpeak
-  ThingSpeak.begin(wifi_client);
-
   // OpenTherm shields
   mOT.begin(mHandleInterrupt);
   sOT.begin(sHandleInterrupt, processRequest);
@@ -524,7 +457,6 @@ void loop() {
   static uint32_t tick_WDT_reset = now;
   static uint32_t tick_ESP_restart = now;
   static uint32_t tick_alive_blinker = now;
-  static uint32_t tick_ThingSpeak_update = now;
   static bool waiting_for_ESP_restart = false;
 
   // Periodically reset the watchdog timer
@@ -532,7 +464,7 @@ void loop() {
     tick_WDT_reset = now;
     esp_task_wdt_reset();
 
-    snprintf(buf, BUF_LEN, "FH        %u", ESP.getFreeHeap());
+    snprintf(buf, BUF_LEN, "Free heap: %u", ESP.getFreeHeap());
     sendToWebClients(buf);
   }
 
@@ -571,38 +503,6 @@ void loop() {
 
   // Over-the-air updates
   ElegantOTA.loop();
-
-  // ThingSpeak
-  if (tick_ThingSpeak_update < millis()) {
-    tick_ThingSpeak_update = millis() + 20000;
-
-    if (THINGSPEAK_CHANNEL == 0 || THINGSPEAK_READ_API_KEY == "TOKEN" ||
-        THINGSPEAK_WRITE_API_KEY == "TOKEN")
-      return;
-
-    // DEV-NOTE: It is tempting to place these calls inside `processRequest()`
-    // but doing so results in NULL values for some of the set fields. Perhaps
-    // a bug in the ThingSpeak library where data of each field gets set back to
-    // NULL in between `ThingSpeak.writeFields()` calls? Hence, we always set
-    // all fields every `writeFields()`.
-    ThingSpeak.setField(1, _Tboiler);
-    ThingSpeak.setField(2, _TSet);
-    ThingSpeak.setField(3, _RelModLevel);
-    ThingSpeak.setField(4, _IsFlameOn);
-    ThingSpeak.setField(5, _TrSet);
-    ThingSpeak.setField(6, _Tr * 100.f);
-
-    int ans =
-        ThingSpeak.writeFields(THINGSPEAK_CHANNEL, THINGSPEAK_WRITE_API_KEY);
-#if DEBUG
-    if (ans == 200) {
-      Serial.println("ThingSpeak channel update: Succes.");
-    } else {
-      Serial.print("Problem updating ThingSpeak channel. HTTP error code: ");
-      Serial.println(ans);
-    }
-#endif
-  }
 
   // Alive blinker
   if (now - tick_alive_blinker >= 500) {

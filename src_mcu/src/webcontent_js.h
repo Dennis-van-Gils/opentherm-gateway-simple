@@ -2,12 +2,6 @@
 
 // clang-format off
 const char js[] PROGMEM = R"rawliteral(
-
-let chart_Tboiler;
-let chart_Flame;
-let chart_Tr;
-let chart_Tset;
-
 init();
 
 Date.prototype.addHours = function(h) {
@@ -16,321 +10,9 @@ Date.prototype.addHours = function(h) {
 }
 
 function init() {
-  let varsInitDone = true;
   if (ipAddr === "`IP_ADDR`" || ipAddr === "") {
     alert("Gateway ip address is unknown");
-    varsInitDone = false;
   }
-
-  if (varsInitDone && (readToken === "`READ_TOKEN`" || readToken === "")) {
-    alert("Please specify READ API Token for thingspeak service in gateway firmware");
-    varsInitDone = false;
-  }
-
-  if (!varsInitDone) {
-    document.querySelector("#waiting-indicator").innerText = "CONFIGURATION INVALID";
-    return;
-  }
-
-  window.addEventListener("load", function () {
-    setTimeout(function () {
-      initUi(varsInitDone);
-    }, 0);
-  });
-}
-
-function getData(dateFrom, dateTo) {
-  // "https://api.thingspeak.com/channels/<channel-id>/feeds.json?api_key=<read-api-key>&offset=<tz-offset>&start=<start-datetime>&end=<end-datetime>&round=0"
-  const tzOffset = new Date().getTimezoneOffset() / -60;
-  const params = `api_key=${readToken}&offset=${tzOffset}&start=${formatDate(dateFrom, '%20')}&end=${formatDate(dateTo, '%20')}&round=0`;
-  const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?${params}`;
-
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", url, false);
-  xhr.send(null);
-  const responseObj = JSON.parse(xhr.responseText);
-
-  _Tboiler = [];
-  _Tset = [];
-  _RelModLevel = [];
-  _Flame = [];
-  _Tr = [];
-
-  responseObj.feeds.forEach((element) => {
-    const timeStamp = new Date(element.created_at).getTime();
-
-    if (element.field1 > 0) {
-      _Tboiler.push([timeStamp, element.field1]);
-    } else {
-      _Tboiler.push([timeStamp, null]);
-    }
-
-    if (element.field2 > 0) {
-      _Tset.push([timeStamp, element.field2]);
-    } else {
-      _Tset.push([timeStamp, null]);
-    }
-
-    _RelModLevel.push([timeStamp, element.field3]);
-    _Flame.push([timeStamp, element.field4]);
-
-    if (element.field6 > 100) {
-      _Tr.push([timeStamp, element.field6 / 100]);
-    } else {
-      _Tr.push([timeStamp, null]);
-    }
-  });
-
-  var ret = {
-    Tboiler: _Tboiler,
-    Tset: _Tset,
-    RelModLevel: _RelModLevel,
-    Flame: _Flame,
-    Tr: _Tr,
-  };
-
-  return ret;
-}
-
-function updateChart(data) {
-  chart_Tboiler.updateSeries([{data: data.Tboiler,},]);
-  chart_Tset.updateSeries([{data: data.Tset,},]);
-  chart_RelModLevel.updateSeries([{data: data.RelModLevel,},]);
-  chart_Flame.updateSeries([{data: data.Flame,},]);
-  chart_Tr.updateSeries([{data: data.Tr,},]);
-}
-
-function reloadAndUpdate() {
-  const dateFrom = Date.parse(document.querySelector("#date-from").value);
-  const dateTo = Date.parse(document.querySelector("#date-to").value);
-  const data = getData(new Date(dateFrom), new Date(dateTo));
-  updateChart(data);
-}
-
-function initUi(initOk) {
-  document.querySelector("#waiting-indicator").style.setProperty("display", "none");
-  document.querySelector("#chart-container").classList.remove("center");
-  document.querySelector("#date-from").value = formatDate(new Date().addHours(-2), 'T');
-  document.querySelector("#date-to").value = formatDate(new Date(), 'T');
-  document.querySelector("#date-from").addEventListener("change", (event) => {
-    reloadAndUpdate();
-  });
-  document.querySelector("#date-to").addEventListener("change", (event) => {
-    reloadAndUpdate();
-  });
-
-  /*
-  document.querySelector("#heatingEnableInput").addEventListener("change", (event) => {
-    try {
-      const enable = document.querySelector("#heatingEnableInput").checked;
-      const url = `http://${ipAddr}/heating-${enable}`;
-      console.log(url);
-
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, false);
-      xhr.send(null);
-    } catch (error) {
-      console.log(`Failed to send request: ${error}`);
-    }
-  });
-
-  document.querySelector("#dhwEnableInput").addEventListener("change", (event) => {
-    const enable = document.querySelector("#dhwEnableInput").checked;
-    const url = `http://${ipAddr}/dhw-${enable}`;
-    console.log(url);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", url, false);
-    xhr.send(null);
-  });
-  */
-
-  let shared_options = {
-    series: [
-      {
-        data: [],
-      },
-    ],
-    theme: {
-      mode: 'dark',
-      palette: 'palette1',
-    },
-    animations: {
-      enabled: false
-    },
-    stroke: {
-      curve: "stepline",
-      width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    fill: {
-      type: "solid",
-    },
-    markers: {
-      size: 0,
-    },
-    tooltip: {
-      enabled: true,
-      x: {
-          show: true,
-          format: 'HH:mm',
-          formatter: undefined,
-      },
-      y: {
-          formatter: undefined,
-          title: '',
-      },
-      marker: {
-          show: true,
-      },
-      fixed: {
-          enabled: true,
-          position: 'topLeft',
-          offsetX: 0,
-          offsetY: 0,
-      },
-    },
-    xaxis: {
-      type: "datetime",
-      labels: {
-        datetimeUTC: false,
-      }
-    },
-  }
-
-  let options = {
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 75,
-      group: "heating",
-      background: '#282828',
-      toolbar: {
-        autoSelected: "pan",
-        show: true,
-      },
-    },
-    grid: {
-      show: false,
-    },
-    yaxis: {
-      show: false,
-      labels: {
-        minWidth: 40,
-      },
-    },
-  };
-  chart_Flame = new ApexCharts(
-    document.querySelector("#chart-Flame"),
-    Object.assign({}, shared_options, options)
-  );
-  chart_Flame.render();
-
-  options = {
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 200,
-      group: "heating",
-      background: '#282828',
-      toolbar: {
-        autoSelected: "pan",
-        show: false,
-      },
-    },
-    yaxis: {
-      labels: {
-        minWidth: 40,
-      },
-    },
-  };
-  chart_Tboiler = new ApexCharts(
-    document.querySelector("#chart-Tboiler"),
-    Object.assign({}, shared_options, options)
-  );
-  chart_Tboiler.render();
-
-  options = {
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 200,
-      group: "heating",
-      background: '#282828',
-      toolbar: {
-        autoSelected: "pan",
-        show: false,
-      },
-    },
-    yaxis: {
-      labels: {
-        minWidth: 40,
-      },
-    },
-  };
-  chart_Tset = new ApexCharts(
-    document.querySelector("#chart-Tset"),
-    Object.assign({}, shared_options, options)
-  );
-  chart_Tset.render();
-
-  options = {
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 200,
-      group: "heating",
-      background: '#282828',
-      toolbar: {
-        autoSelected: "pan",
-        show: false,
-      },
-    },
-    yaxis: {
-      labels: {
-        minWidth: 40,
-      },
-    },
-  };
-  chart_RelModLevel = new ApexCharts(
-    document.querySelector("#chart-RelModLevel"),
-    Object.assign({}, shared_options, options)
-  );
-  chart_RelModLevel.render();
-
-  options = {
-    chart: {
-      id: "chart",
-      type: "area",
-      height: 200,
-      group: "heating",
-      background: '#282828',
-      toolbar: {
-        autoSelected: "pan",
-        show: false,
-      },
-    },
-    yaxis: {
-      labels: {
-        minWidth: 40,
-      },
-    },
-  };
-  chart_Tr = new ApexCharts(
-    document.querySelector("#chart-Tr"),
-    Object.assign({}, shared_options, options)
-  );
-  chart_Tr.render();
-
-  reloadAndUpdate();
-}
-
-function refreshCharts() {
-  document.querySelector("#date-from").value = formatDate(new Date().addHours(-2), 'T');
-  document.querySelector("#date-to").value = formatDate(new Date(), 'T');
-  reloadAndUpdate();
 }
 
 //var gateway = `ws://${window.location.hostname}/ws`;
@@ -519,30 +201,15 @@ function onMessage(event) {
 
   var date = new Date();
   var date_str = formatTime(date);
-  document.getElementById("lbl_timestamp").innerText = date_str;
 
   var text = document.getElementById("commands-log");
   var log = text.value;
   log = log.substring(log.length - 500000);
 
   const msgKind = msgData.slice(0, 2);
-  if (msgKind == "A:") {
-    document.getElementById("lbl_TSet").innerText = msgData.slice(2);
-  } else if (msgKind == "B:") {
-    document.getElementById("lbl_Tboiler").innerText = msgData.slice(2);
-  } else if (msgKind == "C:") {
-    document.getElementById("lbl_TdhwSet").innerText = msgData.slice(2);
-  } else if (msgKind == "D:") {
-    document.getElementById("lbl_Tdhw").innerText = msgData.slice(2);
-  } else if (msgKind == "E:") {
-    document.getElementById("lbl_TrSet").innerText = msgData.slice(2);
-  } else if (msgKind == "F:") {
-    document.getElementById("lbl_Tr").innerText = msgData.slice(2);
-  } else if (msgKind == "G:") {
-    document.getElementById("lbl_MaxTSet").innerText = msgData.slice(2);
-  } else if (msgKind == "!!") {
+  if (msgKind == "!!") {
     text.value = log + date_str + ` !! RESET TRIGGERED\r\n`;
-  } else if (msgKind == "FH") {
+  } else if (msgKind == "Fr") { /* Free heap notification: Skip */
   } else {
     const numberData = msgData.slice(1);
     const int = parseInt(Number(`0x${numberData}`), 10);
@@ -550,12 +217,16 @@ function onMessage(event) {
     const msgType = data >> 28;
     const dataId = (data >> 16) & 0xff;
     const dataValue = data & 65535;
+    var unpacked_reading = transform_reading(dataId, dataValue);
 
-    if (msgType == 0 && dataId == 0)
-    {
-      document.getElementById("heatingEnableInput").checked = ((dataValue & (1<<8)) != 0);
-      //document.getElementById("dhwEnableInput").checked = ((dataValue & (1<<9)) != 0);
-    }
+    const msgTypeStr = OpenThermMessageType[msgType];
+    const dataIdStr = OpenThermMessageID[dataId];
+    text.value = log + date_str + ` ` +
+      pad(` `.repeat(15), msgTypeStr, false) + ` | ` +
+      pad(` `.repeat(3) , dataId, false) + ` | ` +
+      pad(` `.repeat(22), dataIdStr, false) + ` | ` +
+      unpacked_reading + `\r\n`;
+
     if (msgType == 4 && dataId == 0)
     {
       document.getElementById("LED_Fault").checked = ((dataValue & 1) != 0);
@@ -565,14 +236,19 @@ function onMessage(event) {
       document.getElementById("LED_DiagInd").checked = ((dataValue & (1<<6)) != 0);
     }
 
-    const msgTypeStr = OpenThermMessageType[msgType];
-    const dataIdStr = OpenThermMessageID[dataId];
-    text.value = log + date_str + ` ` +
-      pad(` `.repeat(15), msgTypeStr, false) + ` | ` +
-      pad(` `.repeat(3) , dataId, false) + ` | ` +
-      pad(` `.repeat(22), dataIdStr, false) + ` | ` +
-      transform_reading(dataId, dataValue) + `\r\n`;
+    if (msgType == 4 || msgType == 5 || msgType == 6)
+    {
+      if (dataId == 1)  {document.getElementById("lbl_TSet").innerText = unpacked_reading;}
+      if (dataId == 16) {document.getElementById("lbl_TrSet").innerText = unpacked_reading;}
+      if (dataId == 17) {document.getElementById("lbl_RelModLevel").innerText = unpacked_reading;}
+      if (dataId == 24) {document.getElementById("lbl_Tr").innerText = unpacked_reading;}
+      if (dataId == 25) {document.getElementById("lbl_Tboiler").innerText = unpacked_reading;}
+      if (dataId == 26) {document.getElementById("lbl_Tdhw").innerText = unpacked_reading;}
+      if (dataId == 56) {document.getElementById("lbl_TdhwSet").innerText = unpacked_reading;}
+      if (dataId == 57) {document.getElementById("lbl_MaxTSet").innerText = unpacked_reading;}
+    }
   }
+
   text.scrollTop = text.scrollHeight;
 }
 

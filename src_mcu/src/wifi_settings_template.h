@@ -5,11 +5,6 @@
 const char WIFI_SSID[] = "WIFI-SSID";
 const char WIFI_PASSWORD[] = "WIFI-PASSWORD";
 
-// ThingSpeak
-unsigned long THINGSPEAK_CHANNEL = 0;
-const char THINGSPEAK_READ_API_KEY[] = "TOKEN";
-const char THINGSPEAK_WRITE_API_KEY[] = "TOKEN";
-
 // MQTT
 const int MQTT_PORT = 1883;
 const char MQTT_BROKER[] = "192.168.xxx.xxx";

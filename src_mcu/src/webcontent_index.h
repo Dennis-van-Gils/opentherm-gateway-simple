@@ -4,8 +4,6 @@
   const char index_html[] PROGMEM = R"rawliteral(
   <script type="text/javascript">
     var ipAddr = "`IP_ADDR`";
-    var readToken = "`READ_TOKEN`";
-    var channelId = "`CHANNEL_ID`";
   </script>
   <!DOCTYPE html>
   <html lang="en">
@@ -16,10 +14,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta name="color-scheme" content="dark" />
     <title>OpenTherm Gateway</title>
-
     <link href="../styles.css" rel="stylesheet" />
-
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="../otgw-core.js" async></script>
   </head>
 
@@ -53,6 +48,9 @@
           <td style="width: auto">
             <div id="lbl_TdhwSet">--</div>
           </td>
+        </tr>
+        <tr class="blank_row">
+          <td colspan="4"></td>
         </tr>
         <tr>
           <td style="width: auto" colspan="2">
@@ -93,7 +91,7 @@
           <td style="width: auto">
             <div id="lbl_MaxTSet">--</div>
           </td>
-          <td class="label-column">CH mode</td>
+          <td class="label-column">Central heating</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_CHmode" disabled />
@@ -102,14 +100,11 @@
           </td>
         </tr>
         <tr>
-          <td class="label-column">CH enable</td>
+          <td class="label-column">Modulation, &#37;</td>
           <td style="width: auto">
-            <label class="switch">
-              <input type="checkbox" id="heatingEnableInput" disabled />
-              <span class="slider round"></span>
-            </label>
+            <div id="lbl_RelModLevel">--</div>
           </td>
-          <td class="label-column">DHW mode</td>
+          <td class="label-column">Hot water</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_DHWmode" disabled />
@@ -118,9 +113,10 @@
           </td>
         </tr>
         <tr>
-          <td></td>
-          <td></td>
-          <td class="label-column">Flame</td>
+          <td class="label-column">
+          </td>
+          <td style="width: auto;"></td>
+          <td class="label-column">Flame on</td>
           <td style="width: auto">
             <label class="switch">
               <input type="checkbox" id="LED_FlameStatus" disabled />
@@ -129,44 +125,10 @@
           </td>
         </tr>
       </table>
-      <table style="width: 100%">
-        <tr>
-          <td>
-            <button onclick="refreshCharts()">Refresh charts</button>
-          </td>
-          <td class="label-column">From</td>
-          <td style="width: auto">
-            <input type="datetime-local" id="date-from" />
-          </td>
-        </tr>
-        <tr>
-          <td></td>
-          <td class="label-column">To</td>
-          <td style="width: auto">
-            <input type="datetime-local" id="date-to" />
-          </td>
-          <td style="width: auto; text-align: center;">
-            <div id="lbl_timestamp"></div>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <div class="wrapr center" style="height: 1010px" id="chart-container">
-      <div id="waiting-indicator" style="text-align: center; margin: 0 auto">LOADING...</div>
-      Flame on/off
-      <div id="chart-Flame"></div>
-      Central Heating setpoint, &#x00B0;C
-      <div id="chart-Tset"></div>
-      Boiler temperature, &#x00B0;C
-      <div id="chart-Tboiler"></div>
-      Room temperature, &#x00B0;C
-      <div id="chart-Tr"></div>
-      Modulation level, &#x0025;
-      <div id="chart-RelModLevel"></div>
     </div>
 
     <div class="wrapr center">
-      <textarea style="height: 158px; width: 100%; min-width: 100%" id="commands-log"></textarea>
+      <textarea style="height: 400px; width: 100%; min-width: 100%" id="commands-log"></textarea>
     </div>
   </body>
 

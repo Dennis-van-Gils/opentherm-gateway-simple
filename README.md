@@ -1,25 +1,26 @@
 # opentherm-gateway-simple
 
 A simple example of using OpenTherm gateway to monitor central heating
-parameters. Serves a webpage with live graphs using ThingSpeak and publishes the
-central heating parameters to a MQTT broker on your local network.
+parameters. Serves a webpage showing all OpenTherm messages between the
+thermostat and the boiler, and publishes the central heating parameters to a
+MQTT broker on your local network.
 
 Forked from https://github.com/diyless/opentherm-gateway-simple and modified as follows:
 
 * Project file structure changed from `Arduino IDE` to `PlatformIO / VSCode IDE`
 * `Support` Removed support for ESP8266. Supports only ESP32.
-* `Functionality` Publishes central heating parameters also to a MQTT broker on your local network
-* `Functionality` Enabled over-the-air (OTA) firmware updates via `http://.../update`
+* `Functionality` Publishes central heating parameters to a MQTT broker on your local network. For use in, e.g., Home Assistant.
+* `Functionality` Enabled over-the-air (OTA) firmware updates via `http://.../update`.
 * `Functionality` Added a boiler communication timeout check. It will email an alert and reset the ESP.
-* `Interface` Neater log using human-readable values
-* `Interface` Added more read-outs to the webpage and ThingSpeak
-* `Interface` Dark theme
-* `Code` Refactored variable names to mimic OpenTherm protocol
-* `Code` Cleaned up redundant code
-* `Code` Using character arrays in favor of Strings
-* `Code` Removed the `disable CH` and `disable DHW` manual overrides
-* `Code` Added explanatory comments
-* `Fix` Report correct `Flame` status
+* `Webpage` Removed the ThingSpeak and ApexCharts live graphs.
+* `Webpage` Neater OpenTherm log using human-readable values.
+* `Webpage` Dark theme.
+* `Code` Refactored variable names to mimic OpenTherm protocol.
+* `Code` Cleaned up redundant code.
+* `Code` Using character arrays in favor of Strings.
+* `Code` Removed the `disable CH` and `disable DHW` manual overrides.
+* `Code` Added explanatory comments.
+* `Fix` Report correct `Flame` status.
 
 ##
 

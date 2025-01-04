@@ -10,10 +10,6 @@ body {
   height: 100vh;
 }
 
-.apexcharts-canvas {
-  margin: 0 auto;
-}
-
 #html {
   display: none;
 }
@@ -98,5 +94,10 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+.blank_row
+{
+  height: 10px !important;
 }
 )rawliteral";
