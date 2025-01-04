@@ -258,6 +258,12 @@ void processRequest(unsigned long sOT_request,
       mqtt_client.publish("OpenTherm/TSet", buf);
       break;
 
+    case OpenThermMessageID::MaxRelModLevelSetting:
+      // 14: Maximum relative modulation level setting (%)
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
+      mqtt_client.publish("OpenTherm/MaxRelModLevelSetting", buf);
+      break;
+
     case OpenThermMessageID::TrSet:
       // 16: Room Setpoint (°C)
       formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
