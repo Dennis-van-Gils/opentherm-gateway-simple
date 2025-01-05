@@ -239,11 +239,13 @@ function onMessage(event) {
     if (msgType == 4 || msgType == 5 || msgType == 6)
     {
       if (dataId == 1)  {document.getElementById("lbl_TSet").innerText = unpacked_reading;}
+      if (dataId == 14) {document.getElementById("lbl_MaxRelModLevelSetting").innerText = Math.trunc(unpacked_reading);}
       if (dataId == 16) {document.getElementById("lbl_TrSet").innerText = unpacked_reading;}
-      if (dataId == 17) {document.getElementById("lbl_RelModLevel").innerText = unpacked_reading;}
+      if (dataId == 17) {document.getElementById("lbl_RelModLevel").innerText = Math.trunc(unpacked_reading);}
       if (dataId == 24) {document.getElementById("lbl_Tr").innerText = unpacked_reading;}
       if (dataId == 25) {document.getElementById("lbl_Tboiler").innerText = unpacked_reading;}
       if (dataId == 26) {document.getElementById("lbl_Tdhw").innerText = unpacked_reading;}
+      if (dataId == 28) {document.getElementById("lbl_Tret").innerText = unpacked_reading;}
       if (dataId == 56) {document.getElementById("lbl_TdhwSet").innerText = unpacked_reading;}
       if (dataId == 57) {document.getElementById("lbl_MaxTSet").innerText = unpacked_reading;}
     }

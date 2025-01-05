@@ -34,7 +34,7 @@ body {
 
 .label-column {
   white-space: nowrap;
-  width: auto;
+  width: 256px;
 }
 
 .switch {

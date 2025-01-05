@@ -21,6 +21,7 @@
   <body>
     <div class="wrapr">
       <table style="width: 100%">
+
         <tr>
           <td style="width: auto" colspan="2">
             <font size="+1"><b>Room</b></font>
@@ -29,6 +30,7 @@
             <font size="+1"><b>Hot Water</b></font>
           </td>
         </tr>
+
         <tr>
           <td class="label-column">Temperature, &#x00B0;C</td>
           <td style="width: auto">
@@ -39,6 +41,7 @@
             <div id="lbl_Tdhw">--</div>
           </td>
         </tr>
+
         <tr>
           <td class="label-column">Setpoint, &#x00B0;C</td>
           <td style="width: auto">
@@ -49,9 +52,11 @@
             <div id="lbl_TdhwSet">--</div>
           </td>
         </tr>
+
         <tr class="blank_row">
           <td colspan="4"></td>
         </tr>
+
         <tr>
           <td style="width: auto" colspan="2">
             <font size="+1"><b>Central Heating</b></font>
@@ -60,8 +65,9 @@
             <font size="+1"><b>Boiler Status</b></font>
           </td>
         </tr>
+
         <tr>
-          <td class="label-column">Boiler temperature, &#x00B0;C</td>
+          <td class="label-column">Boiler supply temperature, &#x00B0;C</td>
           <td style="width: auto">
             <div id="lbl_Tboiler">--</div>
           </td>
@@ -73,10 +79,11 @@
             </label>
           </td>
         </tr>
+
         <tr>
-          <td class="label-column">Setpoint, &#x00B0;C</td>
+          <td class="label-column">Boiler return temperature, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="lbl_TSet">--</div>
+            <div id="lbl_Tret">--</div>
           </td>
           <td class="label-column">Fault</td>
           <td style="width: auto">
@@ -86,10 +93,11 @@
             </label>
           </td>
         </tr>
+
         <tr>
-          <td class="label-column">Max setpoint, &#x00B0;C</td>
+          <td class="label-column">Setpoint, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="lbl_MaxTSet">--</div>
+            <div id="lbl_TSet">--</div>
           </td>
           <td class="label-column">Central heating</td>
           <td style="width: auto">
@@ -99,10 +107,11 @@
             </label>
           </td>
         </tr>
+
         <tr>
-          <td class="label-column">Modulation, &#37;</td>
+          <td class="label-column">Max setpoint, &#x00B0;C</td>
           <td style="width: auto">
-            <div id="lbl_RelModLevel">--</div>
+            <div id="lbl_MaxTSet">--</div>
           </td>
           <td class="label-column">Hot water</td>
           <td style="width: auto">
@@ -112,10 +121,12 @@
             </label>
           </td>
         </tr>
+
         <tr>
-          <td class="label-column">
+          <td class="label-column">Modulation, &#37;</td>
+          <td style="width: auto">
+            <div id="lbl_RelModLevel">--</div>
           </td>
-          <td style="width: auto;"></td>
           <td class="label-column">Flame on</td>
           <td style="width: auto">
             <label class="switch">
@@ -124,6 +135,16 @@
             </label>
           </td>
         </tr>
+
+        <tr>
+          <td class="label-column">Max modulation, &#37;</td>
+          <td style="width: auto">
+            <div id="lbl_MaxRelModLevelSetting">--</div>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+
       </table>
     </div>
 
