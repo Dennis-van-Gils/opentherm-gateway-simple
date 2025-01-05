@@ -476,7 +476,8 @@ void loop() {
     tick_WDT_reset = now;
     esp_task_wdt_reset();
 
-    snprintf(buf, BUF_LEN, "Free heap: %u", ESP.getFreeHeap());
+    snprintf(buf, BUF_LEN, "Free heap: %u, RRSI: %d dB", ESP.getFreeHeap(),
+             WiFi.RSSI());
     sendToWebClients(buf);
   }
 
