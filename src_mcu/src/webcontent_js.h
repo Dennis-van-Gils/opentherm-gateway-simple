@@ -19,6 +19,10 @@ function init() {
 var gateway = `ws://${ipAddr}/ws`;
 var websocket;
 
+// String containing all published OpenTherm messages. Each line will be
+// separated by '\r\n' and can be directly print to a 'textarea' element.
+var opentherm_log = "";
+
 function initWebSocket() {
   console.log("Trying to open a WebSocket connection...");
   websocket = new WebSocket(gateway);
@@ -38,6 +42,8 @@ function onClose(event) {
 
 function onLoad(event) {
   initWebSocket();
+  populateSelectMsgType();
+  populateSelectMsgID();
 }
 
 function formatDate(date, s = ' ') {
@@ -85,7 +91,7 @@ function dec2flag8(dec) {
   return `b` + pad("00000000", (dec >>> 0).toString(2), true);
 }
 
-function transform_reading(dataId, dataValue) {
+function transformReading(dataId, dataValue) {
   /* TODO: Specific for Remeha, read here:
   https://github.com/rvdbreemen/OTGW-firmware/blob/main/Specification/New%20OT%20data-ids.txt
   https://www.opentherm.eu/request-details/?post_ids=1833
@@ -201,14 +207,13 @@ function onMessage(event) {
 
   var date = new Date();
   var date_str = formatTime(date);
+  document.getElementById("lbl_timestamp").innerText = date_str;
 
-  var text = document.getElementById("commands-log");
-  var log = text.value;
-  log = log.substring(log.length - 500000);
+  opentherm_log = opentherm_log.substring(opentherm_log.length - 500000);
 
   const msgKind = msgData.slice(0, 2);
   if (msgKind == "!!") {
-    text.value = log + date_str + ` !! RESET TRIGGERED\r\n`;
+    opentherm_log = opentherm_log + date_str + ` !! RESET TRIGGERED\r\n`;
   } else if (msgKind == "Fr") { /* Free heap notification: Skip */
   } else {
     const numberData = msgData.slice(1);
@@ -217,11 +222,11 @@ function onMessage(event) {
     const msgType = data >> 28;
     const dataId = (data >> 16) & 0xff;
     const dataValue = data & 65535;
-    var unpacked_reading = transform_reading(dataId, dataValue);
+    var unpacked_reading = transformReading(dataId, dataValue);
 
     const msgTypeStr = OpenThermMessageType[msgType];
     const dataIdStr = OpenThermMessageID[dataId];
-    text.value = log + date_str + ` ` +
+    opentherm_log = opentherm_log + date_str + ` ` +
       pad(` `.repeat(15), msgTypeStr, false) + ` | ` +
       pad(` `.repeat(3) , dataId, false) + ` | ` +
       pad(` `.repeat(22), dataIdStr, false) + ` | ` +
@@ -251,7 +256,72 @@ function onMessage(event) {
     }
   }
 
+  refreshShownLog();
+}
+
+function refreshShownLog() {
+  var shown_log;
+  var select_msg_type = document.getElementById("select_msg_type");
+  var select_msg_id = document.getElementById("select_msg_id");
+
+  shown_log = opentherm_log;
+  if ((select_msg_type.value !== "none") || (select_msg_id.value !== "none"))
+  {
+    // A filter has been selected by the user --> Filter the OpenTherm log.
+    // DEV NOTE: Fugly filtering method using strings, I know. But it works and
+    // I want to move on.
+    let lines = opentherm_log.split('\r\n');
+
+    if (select_msg_type.value !== "none")
+    {
+      let search_str = OpenThermMessageType[select_msg_type.value];
+      lines = lines.filter(line => line.includes(search_str));
+    }
+
+    if (select_msg_id.value !== "none")
+    {
+      let search_str = ` | ` + pad(` `.repeat(3) , select_msg_id.value, false) +
+        ` | `;
+      lines = lines.filter(line => line.includes(search_str));
+    }
+
+    shown_log = lines.join('\r\n');
+  }
+
+  var text = document.getElementById("commands-log");
+  text.value = shown_log;
   text.scrollTop = text.scrollHeight;
+}
+
+function clearFilters() {
+  document.getElementById("select_msg_type").value = "none";
+  document.getElementById("select_msg_id").value = "none";
+  refreshShownLog();
+}
+
+function populateSelectMsgType() {
+  const select = document.getElementById("select_msg_type");
+  for (let i = 0; i < OpenThermMessageType.length; i++)
+  {
+    const option = document.createElement("option");
+    option.value = i;
+    option.textContent = ''.concat(i, ": ", OpenThermMessageType[i]);
+    select.appendChild(option);
+  }
+}
+
+function populateSelectMsgID() {
+  const select = document.getElementById("select_msg_id");
+  for (let i = 0; i < OpenThermMessageID.length; i++)
+  {
+    if (typeof OpenThermMessageID[i] !== 'undefined')
+    {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = ''.concat(i, ": ", OpenThermMessageID[i]);
+      select.appendChild(option);
+    }
+  }
 }
 
 window.addEventListener("load", onLoad);

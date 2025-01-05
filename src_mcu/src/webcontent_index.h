@@ -148,6 +148,37 @@
       </table>
     </div>
 
+    <div class="wrapr">
+      <table>
+        <tr>
+          <td style="width: auto">
+            <div id="lbl_timestamp">--</div>
+          </td>
+          <td>
+            <button onclick="clearFilters()">Clear filters</button>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Filter on message type:</td>
+          <td>
+            <select id="select_msg_type" onchange="refreshShownLog()">
+              <option value="none">None</option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Filter on message ID:</td>
+          <td>
+            <select id="select_msg_id" onchange="refreshShownLog()">
+              <option value="none">None</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </div>
+
     <div class="wrapr center">
       <textarea style="height: 400px; width: 100%; min-width: 100%" id="commands-log"></textarea>
     </div>
