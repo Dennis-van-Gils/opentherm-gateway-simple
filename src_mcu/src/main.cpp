@@ -2,7 +2,7 @@
  * @file    main.cpp
  * @author  Dennis van Gils (vangils.dennis@gmail.com)
  * @version https://github.com/Dennis-van-Gils/opentherm-gateway-simple
- * @date    04-01-2025
+ * @date    05-01-2025
  *
  * @copyright MIT License. See the LICENSE file for details.
  */
@@ -283,7 +283,7 @@ void processRequest(unsigned long sOT_request,
       break;
 
     case OpenThermMessageID::Tboiler:
-      // 25: Boiler flow water temperature (°C)
+      // 25: Boiler supply water temperature (°C)
       formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/Tboiler", buf);
       break;
@@ -292,6 +292,12 @@ void processRequest(unsigned long sOT_request,
       // 26: DHW temperature (°C)
       formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
       mqtt_client.publish("OpenTherm/Tdhw", buf);
+      break;
+
+    case OpenThermMessageID::Tret:
+      // 28: Boiler return water temperature (°C)
+      formattedFloat(buf, BUF_LEN, mOT.getFloat(mOT_response));
+      mqtt_client.publish("OpenTherm/Tret", buf);
       break;
 
     case OpenThermMessageID::TdhwSet:
